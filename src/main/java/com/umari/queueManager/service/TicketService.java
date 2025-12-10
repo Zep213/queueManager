@@ -25,38 +25,44 @@ public class TicketService {
     }
 
     public Ticket criarSenha(EnumTipoTicket tipoSolicitado) {
-        // 1. Definir intervalo do dia (para o limite e sequencial)
+        // 1. Definir intervalo do dia
         LocalDateTime inicioDia = LocalDate.now().atStartOfDay();
         LocalDateTime fimDia = LocalDate.now().atTime(LocalTime.MAX);
 
-        // 2. Verificar Limite (Exemplo: Limite GERAL de 15, independente do tipo)
+        // 2. Verificar Limite GERAL (Continua a contar TODAS as senhas do dia)
         long totalSenhasHoje = ticketRepository.countByCreatedAtBetween(inicioDia, fimDia);
+
+        // Se quiseres que o AVULSO fure o limite, adiciona: && tipoSolicitado != EnumTipoTicket.AVULSO
         if (totalSenhasHoje >= 15) {
             throw new RuntimeException("Limite diário de atendimentos atingido!");
         }
 
-        // 3. Definir o Prefixo com base no Tipo
+        // 3. Definir o Prefixo
         String prefixo;
         if (tipoSolicitado == EnumTipoTicket.PRIORITARIO) {
             prefixo = "P";
         } else if (tipoSolicitado == EnumTipoTicket.AVULSO) {
             prefixo = "A";
         } else {
-            prefixo = "N"; // N de Normal
+            prefixo = "N";
         }
 
-        // 4. Gerar o próximo número
-        // Nota: Aqui podes querer procurar a última senha *deste tipo* ou *geral*.
-        // Para simplificar, vamos manter a sequencial geral, mudando só a letra.
-        Ticket ultimaSenha = ticketRepository.findFirstByCreatedAtBetweenOrderByCreatedAtDesc(inicioDia, fimDia);
-        String novoNumero = gerarProximoNumero(ultimaSenha, prefixo);
+        // 4. MUDANÇA AQUI: Buscar a última senha DESTE TIPO específico
+        Ticket ultimaSenhaDesteTipo = ticketRepository.findFirstByTipoTicketAndCreatedAtBetweenOrderByCreatedAtDesc(
+                tipoSolicitado, // <--- Filtramos pelo tipo que o usuário pediu
+                inicioDia,
+                fimDia
+        );
 
-        // 5. Criar o objeto Ticket
+        // A lógica de gerar número mantém-se igual, mas agora baseia-se na sequência correta
+        String novoNumero = gerarProximoNumero(ultimaSenhaDesteTipo, prefixo);
+
+        // 5. Criar e salvar
         Ticket ticket = new Ticket();
         ticket.setNumero(novoNumero);
         ticket.setStatus(EnumTickets.AGUARDANDO);
-        ticket.setTipoTicket(tipoSolicitado);      // <--- Gravamos o tipo no banco
-        ticket.setCreatedAt(LocalDateTime.now()); // <--- Data atual correta
+        ticket.setTipoTicket(tipoSolicitado);
+        ticket.setCreatedAt(LocalDateTime.now());
 
         return ticketRepository.save(ticket);
     }

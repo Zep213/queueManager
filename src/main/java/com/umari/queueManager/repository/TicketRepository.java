@@ -1,5 +1,6 @@
 package com.umari.queueManager.repository;
 
+import com.umari.queueManager.Enums.EnumTipoTicket;
 import com.umari.queueManager.Model.Ticket;
 import com.umari.queueManager.Enums.EnumTickets;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -16,6 +17,5 @@ public interface TicketRepository extends MongoRepository<Ticket, String> {
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
     // 2. Para encontrar a ÚLTIMA senha criada num intervalo (para saberes o número anterior)
-    Ticket findFirstByCreatedAtBetweenOrderByCreatedAtDesc(LocalDateTime start, LocalDateTime end);
-
+    Ticket findFirstByTipoTicketAndCreatedAtBetweenOrderByCreatedAtDesc(EnumTipoTicket tipoTicket, LocalDateTime start, LocalDateTime end);
 }
