@@ -34,13 +34,17 @@ public class TicketController {
         return ticketService.listarSenhasEmEspera();
     }
 
+    // Adicionar ao TicketController.java
+
     @PutMapping("/{id}/status")
-    public Ticket atualizaTicket(String id, EnumTickets status) {
-        return ticketService.atualizaStatusTicket(id, status);
+    public Ticket atualizaStatus(
+            @PathVariable String id,
+            @RequestParam EnumTickets novoStatus) {
+        return ticketService.atualizaStatusTicket(id, novoStatus);
     }
 
-    @PatchMapping
-    public void chamaProximoTicket() {
-        ticketService.chamaProximoTicket();
+    @PostMapping("/proximo") // POST /api/tickets/proximo
+    public Ticket chamarProximoDaFila() {
+        return ticketService.chamarProximo();
     }
 }

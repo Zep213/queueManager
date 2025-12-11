@@ -18,10 +18,11 @@ public class TicketService {
     private static final int LIMITE_DIARIO = 15;
 
     private final TicketRepository ticketRepository;
+    private final WebSocketService webSocketService;
 
-    // Injeção de dependência via construtor (melhor prática)
-    public TicketService(TicketRepository ticketRepository) {
+    public TicketService(TicketRepository ticketRepository, WebSocketService webSocketService) {
         this.ticketRepository = ticketRepository;
+        this.webSocketService = webSocketService;
     }
 
     public Ticket criarSenha(EnumTipoTicket tipoSolicitado) {
@@ -64,6 +65,7 @@ public class TicketService {
         ticket.setTipoTicket(tipoSolicitado);
         ticket.setCreatedAt(LocalDateTime.now());
 
+        webSocketService.notificarFila(ticket);
         return ticketRepository.save(ticket);
     }
 
@@ -116,13 +118,42 @@ public class TicketService {
         return ticketRepository.save(ticket);
     }
 
-    public void chamaProximoTicket(){
-        if (listarSenhasEmEspera().isEmpty()) {
-            throw new RuntimeException("Nenhum ticket em espera!");
-        } else {
-            Ticket ticket = listarSenhasEmEspera().get(0);
-            ticket.setStatus(EnumTickets.EM_ATENDIMENTO);
-            ticketRepository.save(ticket);
+    public Ticket chamarProximo() {
+        List<Ticket> emAtendimento = ticketRepository.findByStatus(EnumTickets.EM_ATENDIMENTO);
+
+        for (Ticket t : emAtendimento) {
+            t.setStatus(EnumTickets.ATENDIDO);
+            ticketRepository.save(t);
         }
+        // 1. Tenta achar um PRIORITÁRIO que esteja AGUARDANDO
+        Ticket proximo = ticketRepository.findFirstByStatusAndTipoTicketOrderByCreatedAtAsc(
+                EnumTickets.AGUARDANDO,
+                EnumTipoTicket.PRIORITARIO
+        );
+
+        // 2. Se não houver Prioritário, tenta um NORMAL
+        if (proximo == null) {
+            proximo = ticketRepository.findFirstByStatusAndTipoTicketOrderByCreatedAtAsc(
+                    EnumTickets.AGUARDANDO,
+                    EnumTipoTicket.NORMAL
+            );
+        }
+
+        // 3. Se não houver Normal, tenta um AVULSO
+        if (proximo == null) {
+            proximo = ticketRepository.findFirstByStatusAndTipoTicketOrderByCreatedAtAsc(
+                    EnumTickets.AGUARDANDO,
+                    EnumTipoTicket.AVULSO
+            );
+        }
+
+        // 4. Se ainda for null, a fila está vazia!
+        if (proximo == null) {
+            throw new RuntimeException("Não há ninguém na fila!");
+        }
+
+        // 5. Atualiza o status para EM_ATENDIMENTO e Salva
+        proximo.setStatus(EnumTickets.EM_ATENDIMENTO);
+        return ticketRepository.save(proximo);
     }
 }

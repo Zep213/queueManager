@@ -18,4 +18,7 @@ public interface TicketRepository extends MongoRepository<Ticket, String> {
 
     // 2. Para encontrar a ÚLTIMA senha criada num intervalo (para saberes o número anterior)
     Ticket findFirstByTipoTicketAndCreatedAtBetweenOrderByCreatedAtDesc(EnumTipoTicket tipoTicket, LocalDateTime start, LocalDateTime end);
+
+    //3. Encontra o PRIMEIRO (mais antigo) com certo STATUS e TIPO
+    Ticket findFirstByStatusAndTipoTicketOrderByCreatedAtAsc(EnumTickets status, EnumTipoTicket tipoTicket);
 }
