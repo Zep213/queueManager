@@ -1,5 +1,6 @@
 package com.umari.queueManager.Controller;
 
+import com.umari.queueManager.Enums.EnumTickets;
 import com.umari.queueManager.Model.Ticket;
 import com.umari.queueManager.Enums.EnumTipoTicket;
 import com.umari.queueManager.service.TicketService;
@@ -31,5 +32,15 @@ public class TicketController {
     @GetMapping
     public List<Ticket> listarFila() {
         return ticketService.listarSenhasEmEspera();
+    }
+
+    @PutMapping("/{id}/status")
+    public Ticket atualizaTicket(String id, EnumTickets status) {
+        return ticketService.atualizaStatusTicket(id, status);
+    }
+
+    @PatchMapping
+    public void chamaProximoTicket() {
+        ticketService.chamaProximoTicket();
     }
 }

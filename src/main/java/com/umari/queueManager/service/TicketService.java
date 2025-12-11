@@ -106,4 +106,23 @@ public class TicketService {
         // Formata novamente com 3 dígitos e o prefixo "A"
         return String.format("A%03d", sequencial);
     }
+
+    public Ticket atualizaStatusTicket(String ticketId, EnumTickets novoStatus) {
+        Ticket ticket = ticketRepository
+                .findById(ticketId)
+                .orElseThrow(() -> new RuntimeException("Ticket não encontrado!"));
+
+        ticket.setStatus(novoStatus);
+        return ticketRepository.save(ticket);
+    }
+
+    public void chamaProximoTicket(){
+        if (listarSenhasEmEspera().isEmpty()) {
+            throw new RuntimeException("Nenhum ticket em espera!");
+        } else {
+            Ticket ticket = listarSenhasEmEspera().get(0);
+            ticket.setStatus(EnumTickets.EM_ATENDIMENTO);
+            ticketRepository.save(ticket);
+        }
+    }
 }
