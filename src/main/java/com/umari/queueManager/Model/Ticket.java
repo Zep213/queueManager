@@ -14,6 +14,7 @@ public class Ticket {
 
     private String id;
     private String numero;
+    private String nomeCliente;
     private EnumTickets status;
     private LocalDateTime createdAt;
     private EnumTipoTicket tipoTicket;

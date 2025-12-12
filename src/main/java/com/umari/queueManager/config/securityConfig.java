@@ -15,22 +15,25 @@ public class securityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Desativa CSRF para facilitar chamadas REST
+                .csrf(csrf -> csrf.disable()) // Desativa proteção CSRF para facilitar
                 .authorizeHttpRequests(auth -> auth
-                        // 1. PÚBLICO: Qualquer um pode criar uma senha (Cliente)
-                        .requestMatchers(HttpMethod.POST, "/api/tickets").permitAll()
+                        // 1. RECURSOS PÚBLICOS (Não pede senha)
+                        .requestMatchers("/", "/index.html").permitAll() // A página do Totem
+                        .requestMatchers("/css/**", "/js/**").permitAll() // Estilos e Scripts
+                        .requestMatchers(HttpMethod.POST, "/api/tickets").permitAll() // Criar senha
+                        .requestMatchers("/ws-queue/**").permitAll() // WebSocket
 
-                        // 1.1 PÚBLICO: WebSocket (para o atendente receber notificações sem bloqueio de protocolo)
-                        .requestMatchers("/ws-queue/**").permitAll()
+                        // 2. RECURSOS PRIVADOS (Pede senha)
+                        .requestMatchers("/admin.html").authenticated() // <--- A página do Admin
+                        .requestMatchers(HttpMethod.GET, "/api/tickets").authenticated() // Listar fila
+                        .requestMatchers(HttpMethod.PUT, "/api/tickets/**").authenticated() // Chamar/Atender
+                        .requestMatchers(HttpMethod.POST, "/api/tickets/proximo").authenticated() // Botão Próximo
 
-                        // 2. PRIVADO: Só o atendente logado pode listar, chamar ou mudar status
-                        .requestMatchers(HttpMethod.GET, "/api/tickets").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/tickets/**").authenticated()
-
-                        // Bloqueia qualquer outra coisa por padrão
+                        // Qualquer outra coisa exige login
                         .anyRequest().authenticated()
                 )
-                // Habilita o login básico (janela de popup ou header Auth) para o atendente
+                // Usa o formulário de login padrão do browser ou do Spring
+                .formLogin(Customizer.withDefaults())
                 .httpBasic(Customizer.withDefaults());
 
         return http.build();

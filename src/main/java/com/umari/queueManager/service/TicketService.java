@@ -2,6 +2,8 @@ package com.umari.queueManager.service;
 
 import com.umari.queueManager.Enums.EnumTickets;
 import com.umari.queueManager.Model.Ticket;
+import com.umari.queueManager.Model.TicketHistorico;
+import com.umari.queueManager.repository.TicketHistoricoRepository;
 import com.umari.queueManager.repository.TicketRepository;
 import com.umari.queueManager.Enums.EnumTipoTicket;
 import org.springframework.stereotype.Service;
@@ -10,6 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TicketService {
@@ -18,14 +21,21 @@ public class TicketService {
     private static final int LIMITE_DIARIO = 15;
 
     private final TicketRepository ticketRepository;
+    private final TicketHistoricoRepository historicoRepository;
     private final WebSocketService webSocketService;
+    private final CsvLogService csvLogService;
 
-    public TicketService(TicketRepository ticketRepository, WebSocketService webSocketService) {
+    public TicketService(TicketRepository ticketRepository,
+                         TicketHistoricoRepository historicoRepository,
+                         WebSocketService webSocketService,
+                         CsvLogService csvLogService) {
         this.ticketRepository = ticketRepository;
+        this.historicoRepository = historicoRepository;
         this.webSocketService = webSocketService;
+        this.csvLogService = csvLogService;
     }
 
-    public Ticket criarSenha(EnumTipoTicket tipoSolicitado) {
+    public Ticket criarSenha(EnumTipoTicket tipoSolicitado, String nomeCliente) {
         // 1. Definir intervalo do dia
         LocalDateTime inicioDia = LocalDate.now().atStartOfDay();
         LocalDateTime fimDia = LocalDate.now().atTime(LocalTime.MAX);
@@ -61,6 +71,7 @@ public class TicketService {
         // 5. Criar e salvar
         Ticket ticket = new Ticket();
         ticket.setNumero(novoNumero);
+        ticket.setNomeCliente(nomeCliente);
         ticket.setStatus(EnumTickets.AGUARDANDO);
         ticket.setTipoTicket(tipoSolicitado);
         ticket.setCreatedAt(LocalDateTime.now());
@@ -155,5 +166,33 @@ public class TicketService {
         // 5. Atualiza o status para EM_ATENDIMENTO e Salva
         proximo.setStatus(EnumTickets.EM_ATENDIMENTO);
         return ticketRepository.save(proximo);
+    }
+
+    public void realizarPausaEArquivar() {
+        // 1. Pega os finalizados
+        List<Ticket> lixo = ticketRepository.findByStatus(EnumTickets.ATENDIDO);
+        lixo.addAll(ticketRepository.findByStatus(EnumTickets.CANCELADO));
+
+        if (!lixo.isEmpty()) {
+            // 2. Converte para histórico
+            List<TicketHistorico> historicos = lixo.stream()
+                    .map(TicketHistorico::new)
+                    .collect(Collectors.toList());
+
+            // 3. Salva no Banco de Histórico (MongoDB)
+            historicoRepository.saveAll(historicos);
+
+            // 4. ATUALIZA A PLANILHA CSV LOCAL
+            csvLogService.registrarNoArquivo(historicos);
+
+            // 5. Limpa a fila principal
+            ticketRepository.deleteAll(lixo);
+
+            System.out.println("🧹 Limpeza e Backup CSV realizados com sucesso!");
+        }
+    }
+    public List<TicketHistorico> listarHistorico() {
+        // Podes querer limitar aos últimos 50 ou filtrar por data no futuro
+        return historicoRepository.findAll();
     }
 }

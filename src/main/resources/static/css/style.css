@@ -1,0 +1,103 @@
+body {
+    /* Gradiente moderno */
+    background: linear-gradient(135deg, #e0f7fa 0%, #80deea 100%);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+}
+
+.ticket-card {
+    max-width: 400px;
+    width: 100%; /* Garante que não fica espremido em telas pequenas */
+    padding: 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    background: white;
+    text-align: center;
+}
+
+.btn-ticket {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    text-transform: uppercase;
+    transition: transform 0.2s;
+}
+
+.btn-ticket:active {
+    transform: scale(0.95);
+}
+
+#ticket-result {
+    display: none;
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background-color: #f1f8e9;
+    border: 2px dashed #aed581;
+    border-radius: 15px;
+}
+
+.big-number {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: #2e7d32;
+}
+
+/* Link discreto para o Admin */
+.admin-link {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 5px 10px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    color: #333;
+    border: 1px solid #ccc;
+    text-decoration: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.admin-link:hover {
+    background-color: #333;
+    color: white;
+}
+
+
+/* --- ESTILOS DO PAINEL ADMIN --- */
+
+.painel-container {
+    max-width: 900px;
+    margin: 6rem auto 2rem auto; /* Margem superior maior por causa da navbar fixa */
+    background: rgba(255, 255, 255, 0.95);
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.current-ticket-card {
+    background-color: #e3f2fd;
+    border: 2px solid #2196f3;
+    border-radius: 10px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.status-badge {
+    font-size: 0.9rem;
+    padding: 0.5em 1em;
+}
+
+/* Ajuste na Navbar para ficar bonita sobre o gradiente */
+.navbar {
+    backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.9) !important;
+}
