@@ -10,12 +10,14 @@
 <body>
 
 <nav class="navbar navbar-light fixed-top shadow-sm px-4">
-        <span class="navbar-brand mb-0 h1 fw-bold text-primary">
-            QueueManager <span class="badge bg-secondary text-white fs-6">Admin</span>
-        </span>
+
+    <a class="navbar-brand mb-0 h1 fw-bold text-primary" href="/" title="Voltar à Página Inicial">
+        QueueManager <span class="badge bg-secondary text-white fs-6">Admin</span>
+    </a>
+
     <div class="d-flex gap-2">
         <a href="/api/tickets/historico/baixar-acumulado" target="_blank" class="btn btn-success btn-sm">
-            📥 Baixar Planilha Acumulada
+            📥 Baixar Planilha
         </a>
         <button class="btn btn-outline-primary btn-sm" onclick="abrirHistorico()">📜 Histórico</button>
         <a href="/logout" class="btn btn-outline-danger btn-sm">Sair</a>
