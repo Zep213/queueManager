@@ -5,6 +5,7 @@ import com.umari.queueManager.Model.Ticket;
 import com.umari.queueManager.Enums.EnumTipoTicket;
 import com.umari.queueManager.Model.TicketHistorico;
 import com.umari.queueManager.service.TicketService;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -89,32 +90,35 @@ public class TicketController {
                 .body(csvContent.toString());
     }
 
-    @GetMapping("/historico/baixar-acumulado") // GET /api/tickets/historico/baixar-acumulado
-    public ResponseEntity<Object> baixarCsvAcumulado() {
-        try {
-            // Procura o arquivo na raiz do projeto
-            File arquivo = new File("historico_geral.csv");
+    // Gera o arquivo na memória RAM, sem salvar no disco
+    @GetMapping("/historico/baixar-dinamico")
+    public ResponseEntity<ByteArrayResource> baixarHistoricoDinamico() {
+        List<TicketHistorico> historico = ticketService.listarHistorico();
 
-            if (!arquivo.exists()) {
-                return ResponseEntity.badRequest().body("O arquivo ainda não existe. Realize uma pausa para criar o histórico.");
-            }
+        StringBuilder csv = new StringBuilder();
+        csv.append("ID;Senha;Cliente;Data\n");
 
-            InputStreamResource resource = new InputStreamResource(new FileInputStream(arquivo));
-
-            return ResponseEntity.ok()
-                    // Força o navegador a baixar com este nome
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"historico_geral.csv\"")
-                    .contentType(MediaType.parseMediaType("text/csv"))
-                    .contentLength(arquivo.length())
-                    .body(resource);
-
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Erro ao baixar arquivo: " + e.getMessage());
+        for (TicketHistorico t : historico) {
+            csv.append(t.getNumero()).append(";").append(t.getNomeCliente()).append("...\n");
         }
+
+        ByteArrayResource resource = new ByteArrayResource(csv.toString().getBytes());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=historico.csv")
+                .contentLength(resource.contentLength())
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .body(resource);
     }
     @PutMapping("/{id}/cancelar") // Define a rota, ex: /atendimentos/5/cancelar
     public ResponseEntity<Void> cancelarAtendimento(@PathVariable String  id) {
         ticketService.atualizaStatusTicket(id, EnumTickets.CANCELADO);
         return ResponseEntity.noContent().build(); // Retorna 204 (Sucesso sem conteúdo)
+    }
+
+    @GetMapping("/fila/tamanho")
+    public ResponseEntity<Long> contarFila() {
+        long qtd = ticketService.listarSenhasEmEspera().size();
+        return ResponseEntity.ok(qtd);
     }
 }

@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public class TicketService {
 
     // Constante para o limite diário (fácil de alterar no futuro)
-    private static final int LIMITE_DIARIO = 15;
+    //private static final int LIMITE_DIARIO = 15;
 
     private final TicketRepository ticketRepository;
     private final TicketHistoricoRepository historicoRepository;
@@ -46,9 +46,9 @@ public class TicketService {
         long totalSenhasHoje = ticketRepository.countByCreatedAtBetween(inicioDia, fimDia);
 
         // Se quiseres que o AVULSO fure o limite, adiciona: && tipoSolicitado != EnumTipoTicket.AVULSO
-        if (totalSenhasHoje >= 15) {
+       /* if (totalSenhasHoje >= 15) {
             throw new RuntimeException("Limite diário de atendimentos atingido!");
-        }
+        }*/
 
         // 3. Definir o Prefixo
         String prefixo;
