@@ -25,16 +25,12 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final TicketHistoricoRepository historicoRepository;
     private final WebSocketService webSocketService;
-    private final CsvLogService csvLogService;
-
     public TicketService(TicketRepository ticketRepository,
                          TicketHistoricoRepository historicoRepository,
-                         WebSocketService webSocketService,
-                         CsvLogService csvLogService) {
+                         WebSocketService webSocketService) {
         this.ticketRepository = ticketRepository;
         this.historicoRepository = historicoRepository;
         this.webSocketService = webSocketService;
-        this.csvLogService = csvLogService;
     }
 
     public Ticket criarSenha(EnumTipoTicket tipoSolicitado, String nomeCliente) {
@@ -171,23 +167,15 @@ public class TicketService {
     }
 
     public void realizarPausaEArquivar() {
-        // 1. Pega os finalizados
         List<Ticket> lixo = ticketRepository.findByStatus(EnumTickets.ATENDIDO);
         lixo.addAll(ticketRepository.findByStatus(EnumTickets.CANCELADO));
 
         if (!lixo.isEmpty()) {
-            // 2. Converte para histórico
             List<TicketHistorico> historicos = lixo.stream()
                     .map(TicketHistorico::new)
                     .collect(Collectors.toList());
 
-            // 3. Salva no Banco de Histórico (MongoDB)
             historicoRepository.saveAll(historicos);
-
-            // 4. ATUALIZA A PLANILHA CSV LOCAL
-            csvLogService.registrarNoArquivo(historicos);
-
-            // 5. Limpa a fila principal
             ticketRepository.deleteAll(lixo);
 
             log.info("🧹 Pausa Realizada: {} senhas foram arquivadas e removidas da fila.", lixo.size());
