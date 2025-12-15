@@ -32,7 +32,7 @@ public class TicketController {
     // Se não enviar nada, assume NORMAL por padrão.
     @PostMapping
     public Ticket gerarSenha(@RequestParam(defaultValue = "NORMAL") EnumTipoTicket tipoTicket,
-                             @RequestParam(required = false) String nomeCliente) {
+                             @RequestParam String nomeCliente) {
         return ticketService.criarSenha(tipoTicket, nomeCliente);
     }
 

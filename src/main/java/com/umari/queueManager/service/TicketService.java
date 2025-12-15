@@ -6,6 +6,7 @@ import com.umari.queueManager.Model.TicketHistorico;
 import com.umari.queueManager.repository.TicketHistoricoRepository;
 import com.umari.queueManager.repository.TicketRepository;
 import com.umari.queueManager.Enums.EnumTipoTicket;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class TicketService {
 
     // Constante para o limite diário (fácil de alterar no futuro)
@@ -188,7 +190,9 @@ public class TicketService {
             // 5. Limpa a fila principal
             ticketRepository.deleteAll(lixo);
 
-            System.out.println("🧹 Limpeza e Backup CSV realizados com sucesso!");
+            log.info("🧹 Pausa Realizada: {} senhas foram arquivadas e removidas da fila.", lixo.size());
+        } else {
+            log.info("☕ Pausa solicitada, mas não havia senhas finalizadas para arquivar.");
         }
     }
     public List<TicketHistorico> listarHistorico() {

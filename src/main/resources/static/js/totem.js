@@ -8,9 +8,14 @@ async function gerarSenha(tipo) {
     // 2. Monta a URL com o nome (se existir)
     // Ex: /api/tickets?tipoTicket=NORMAL&nomeCliente=Joao
     let url = `${API_URL}?tipoTicket=${tipo}`;
-    if (nome) {
-        url += `&nomeCliente=${encodeURIComponent(nome)}`;
-    }
+    if (!nome) {
+            alert("Por favor, introduza o seu nome para retirar a senha.");
+            nomeInput.focus(); // Coloca o cursor no campo para ajudar
+            nomeInput.classList.add("is-invalid"); // Adiciona vermelho (Bootstrap) se quiseres
+            return; // Para a função aqui! Não envia nada ao servidor.
+        }
+        // Remove o vermelho se ele corrigir
+        nomeInput.classList.remove("is-invalid");
 
     try {
         const response = await fetch(url, { method: 'POST' });

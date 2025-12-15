@@ -5,6 +5,7 @@ import com.umari.queueManager.Model.Ticket;
 import com.umari.queueManager.Model.TicketHistorico;
 import com.umari.queueManager.repository.TicketHistoricoRepository;
 import com.umari.queueManager.repository.TicketRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
+@Slf4j
 public class AgendadorLimpeza {
 
     private final TicketRepository ticketRepository;
@@ -37,7 +39,7 @@ public class AgendadorLimpeza {
         atendidos.addAll(cancelados); // Junta tudo numa lista só
 
         if (atendidos.isEmpty()) {
-            System.out.println("✅ Nenhuma senha para arquivar hoje.");
+            log.info("✅ Nenhuma senha para arquivar hoje.");
             return;
         }
 
@@ -52,12 +54,12 @@ public class AgendadorLimpeza {
         // 4. Apagar da Fila Principal
         ticketRepository.deleteAll(atendidos);
 
-        System.out.println("✨ Limpeza concluída! " + atendidos.size() + " senhas movidas para o histórico.");
+        log.info("✨ Limpeza concluída! " + atendidos.size() + " senhas movidas para o histórico.");
     }
 
     @Scheduled(initialDelay = 300000, fixedDelay = Long.MAX_VALUE)
     public void limpezaNoArranque() {
-        System.out.println("🧹 Verificando lixo antigo após inicialização...");
+        log.info("🧹 Verificando lixo antigo após inicialização...");
         arquivarSenhasAntigas();
     }
 
