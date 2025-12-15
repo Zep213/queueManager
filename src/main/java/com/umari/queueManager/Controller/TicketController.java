@@ -112,4 +112,9 @@ public class TicketController {
             return ResponseEntity.internalServerError().body("Erro ao baixar arquivo: " + e.getMessage());
         }
     }
+    @PutMapping("/{id}/cancelar") // Define a rota, ex: /atendimentos/5/cancelar
+    public ResponseEntity<Void> cancelarAtendimento(@PathVariable String  id) {
+        ticketService.atualizaStatusTicket(id, EnumTickets.CANCELADO);
+        return ResponseEntity.noContent().build(); // Retorna 204 (Sucesso sem conteúdo)
+    }
 }

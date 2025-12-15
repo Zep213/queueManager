@@ -15,6 +15,7 @@ public class securityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable()) // Desativa proteção CSRF para facilitar
                 .authorizeHttpRequests(auth -> auth
                         // 1. RECURSOS PÚBLICOS (Não pede senha)

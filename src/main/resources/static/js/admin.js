@@ -236,3 +236,25 @@ function preencherTabelaHistorico(lista) {
         tbody.appendChild(tr);
     });
 }
+async function cancelarTicket(id) {
+    if (!confirm("Tem a certeza que deseja cancelar esta senha?")) {
+        return;
+    }
+
+    try {
+        // Usa a rota que já existe no teu TicketController: PUT /api/tickets/{id}/status
+        const response = await fetch(`${API_URL}/${id}/status?novoStatus=CANCELADO`, {
+            method: 'PUT'
+        });
+
+        if (response.ok) {
+            // Atualiza a tabela para remover o item cancelado
+            carregarFila();
+        } else {
+            alert("Erro ao cancelar o ticket.");
+        }
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro de conexão ao tentar cancelar.");
+    }
+}
