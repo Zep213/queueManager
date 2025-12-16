@@ -11,10 +11,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tickets")
@@ -48,13 +51,17 @@ public class TicketController {
     @PutMapping("/{id}/status")
     public Ticket atualizaStatus(
             @PathVariable String id,
-            @RequestParam EnumTickets novoStatus) {
-        return ticketService.atualizaStatusTicket(id, novoStatus);
+            @RequestParam EnumTickets novoStatus,
+            Authentication authentication) { // <--- Injeta usuário logado
+
+        String nomeAtendente = (authentication != null) ? authentication.getName() : "Desconhecido";
+        return ticketService.atualizaStatusTicket(id, novoStatus, nomeAtendente);
     }
 
-    @PostMapping("/proximo") // POST /api/tickets/proximo
-    public Ticket chamarProximoDaFila() {
-        return ticketService.chamarProximo();
+    @PostMapping("/proximo")
+    public Ticket chamarProximoDaFila(Authentication authentication) { // <--- Injeta usuário logado
+        String nomeAtendente = (authentication != null) ? authentication.getName() : "Desconhecido";
+        return ticketService.chamarProximo(nomeAtendente);
     }
 
     @PostMapping("/pausa") // POST /api/tickets/pausa
@@ -111,8 +118,8 @@ public class TicketController {
                 .body(resource);
     }
     @PutMapping("/{id}/cancelar") // Define a rota, ex: /atendimentos/5/cancelar
-    public ResponseEntity<Void> cancelarAtendimento(@PathVariable String  id) {
-        ticketService.atualizaStatusTicket(id, EnumTickets.CANCELADO);
+    public ResponseEntity<Void> cancelarAtendimento(@PathVariable String  id, String nomeAtendente) {
+        ticketService.atualizaStatusTicket(id, EnumTickets.CANCELADO,nomeAtendente);
         return ResponseEntity.noContent().build(); // Retorna 204 (Sucesso sem conteúdo)
     }
 
@@ -120,5 +127,33 @@ public class TicketController {
     public ResponseEntity<Long> contarFila() {
         long qtd = ticketService.listarSenhasEmEspera().size();
         return ResponseEntity.ok(qtd);
+    }
+
+    // No TicketController.java
+
+    @GetMapping("/info-totem")
+    public ResponseEntity<Map<String, Object>> getInfoTotem() {
+        // 1. Tamanho da fila
+        int pessoasNaFila = ticketService.listarSenhasEmEspera().size();
+
+        // 2. Cálculo de tempo (10 min por pessoa)
+        int minutosEspera = pessoasNaFila * 10;
+
+        // 3. Vagas Restantes
+        int limiteDiario = 15;
+        long senhasHoje = ticketService.contarSenhasHoje();
+        long vagasRestantes = limiteDiario - senhasHoje;
+
+        Map<String, Object> resposta = new HashMap<>();
+        resposta.put("fila", pessoasNaFila);
+        resposta.put("tempoMinutos", minutosEspera);
+        resposta.put("vagasRestantes", Math.max(0, vagasRestantes));
+
+        return ResponseEntity.ok(resposta);
+    }
+
+    @GetMapping("/dashboard")
+    public ResponseEntity<Map<String, Object>> getDashboardData() {
+        return ResponseEntity.ok(ticketService.getDadosDashboard());
     }
 }

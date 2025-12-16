@@ -8,11 +8,14 @@ import com.umari.queueManager.repository.TicketRepository;
 import com.umari.queueManager.Enums.EnumTipoTicket;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import com.umari.queueManager.config.securityConfig;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -118,51 +121,45 @@ public class TicketService {
         return String.format("A%03d", sequencial);
     }
 
-    public Ticket atualizaStatusTicket(String ticketId, EnumTickets novoStatus) {
-        Ticket ticket = ticketRepository
-                .findById(ticketId)
+    public Ticket atualizaStatusTicket(String ticketId, EnumTickets novoStatus, String nomeAtendente) {
+        Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new RuntimeException("Ticket não encontrado!"));
 
         ticket.setStatus(novoStatus);
+
+        // Se for uma ação de atendimento, confirma o nome do atendente
+        if (nomeAtendente != null && !nomeAtendente.isEmpty()) {
+            ticket.setAtendente(nomeAtendente);
+        }
+
         return ticketRepository.save(ticket);
     }
 
-    public Ticket chamarProximo() {
-        List<Ticket> emAtendimento = ticketRepository.findByStatus(EnumTickets.EM_ATENDIMENTO);
+    public Ticket chamarProximo(String nomeAtendente) {
+        // 1. Antes de chamar o próximo, finaliza quem esse atendente estava atendendo (opcional, mas bom pra evitar erros)
+        // Por simplicidade, vamos apenas buscar o próximo.
 
-        for (Ticket t : emAtendimento) {
-            t.setStatus(EnumTickets.ATENDIDO);
-            ticketRepository.save(t);
-        }
-        // 1. Tenta achar um PRIORITÁRIO que esteja AGUARDANDO
+        // Lógica de prioridade (Prioritário -> Normal -> Avulso)
         Ticket proximo = ticketRepository.findFirstByStatusAndTipoTicketOrderByCreatedAtAsc(
-                EnumTickets.AGUARDANDO,
-                EnumTipoTicket.PRIORITARIO
-        );
+                EnumTickets.AGUARDANDO, EnumTipoTicket.PRIORITARIO);
 
-        // 2. Se não houver Prioritário, tenta um NORMAL
         if (proximo == null) {
             proximo = ticketRepository.findFirstByStatusAndTipoTicketOrderByCreatedAtAsc(
-                    EnumTickets.AGUARDANDO,
-                    EnumTipoTicket.NORMAL
-            );
+                    EnumTickets.AGUARDANDO, EnumTipoTicket.NORMAL);
         }
 
-        // 3. Se não houver Normal, tenta um AVULSO
         if (proximo == null) {
             proximo = ticketRepository.findFirstByStatusAndTipoTicketOrderByCreatedAtAsc(
-                    EnumTickets.AGUARDANDO,
-                    EnumTipoTicket.AVULSO
-            );
+                    EnumTickets.AGUARDANDO, EnumTipoTicket.AVULSO);
         }
 
-        // 4. Se ainda for null, a fila está vazia!
         if (proximo == null) {
             throw new RuntimeException("Não há ninguém na fila!");
         }
 
-        // 5. Atualiza o status para EM_ATENDIMENTO e Salva
         proximo.setStatus(EnumTickets.EM_ATENDIMENTO);
+        proximo.setAtendente(nomeAtendente); // <--- GRAVA QUEM CHAMOU
+
         return ticketRepository.save(proximo);
     }
 
@@ -186,5 +183,39 @@ public class TicketService {
     public List<TicketHistorico> listarHistorico() {
         // Podes querer limitar aos últimos 50 ou filtrar por data no futuro
         return historicoRepository.findAll();
+    }
+
+    public long contarSenhasHoje() {
+        LocalDateTime inicioDia = LocalDate.now().atStartOfDay();
+        LocalDateTime fimDia = LocalDate.now().atTime(LocalTime.MAX);
+        return ticketRepository.countByCreatedAtBetween(inicioDia, fimDia);
+    }
+
+    public Map<String, Object> getDadosDashboard() {
+        Map<String, Object> dashboard = new HashMap<>();
+
+        // 1. Fila Geral (Aguardando)
+        List<Ticket> filaGeral = ticketRepository.findByStatus(EnumTickets.AGUARDANDO);
+        dashboard.put("filaGeral", filaGeral);
+
+        // 2. O que está acontecendo no Guiche 01?
+        // Busca se tem alguém sendo atendido agora por ele
+        // Nota: Precisaríamos fazer um find customizado no repository, ou filtrar na lista de EM_ATENDIMENTO
+        List<Ticket> emAtendimento = ticketRepository.findByStatus(EnumTickets.EM_ATENDIMENTO);
+
+        Ticket guiche01Atual = emAtendimento.stream()
+                .filter(t -> "guiche01".equals(t.getAtendente()))
+                .findFirst().orElse(null);
+
+        Ticket guiche02Atual = emAtendimento.stream()
+                .filter(t -> "guiche02".equals(t.getAtendente()))
+                .findFirst().orElse(null);
+
+        dashboard.put("guiche01Atual", guiche01Atual);
+        dashboard.put("guiche02Atual", guiche02Atual);
+
+        // Podes adicionar histórico recente de cada um aqui também se quiseres
+
+        return dashboard;
     }
 }

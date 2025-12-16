@@ -15,6 +15,8 @@ public class TicketHistorico {
     private String tipo;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataArquivamento;
+    private String atendente;
+
 
     public TicketHistorico() {}
 
@@ -26,5 +28,6 @@ public class TicketHistorico {
         this.tipo = t.getTipoTicket().toString();
         this.dataCriacao = t.getCreatedAt();
         this.dataArquivamento = LocalDateTime.now(); // Hora que foi arquivado (Hora da Pausa)
+        this.atendente = t.getAtendente();
     }
 }

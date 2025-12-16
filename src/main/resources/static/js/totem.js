@@ -7,31 +7,38 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(atualizarInfoFila, 30000);
 });
 
+// No src/main/resources/static/js/totem.js
+
 async function atualizarInfoFila() {
     try {
-        // Precisamos criar este endpoint no TicketController (ver passo abaixo)
-        // Se ainda não criou, vai dar erro 404, mas não quebra a tela.
-        const response = await fetch(`${API_URL}/fila/tamanho`);
+        const response = await fetch(`${API_URL}/info-totem`); // Novo endpoint
 
         if (response.ok) {
-            const qtd = await response.json();
-            const tempoEstimado = qtd * 10; // Regra de 10 min por pessoa
+            const dados = await response.json();
 
-            const textoTitulo = qtd === 0
+            // 1. Atualiza Texto da Fila
+            const textoTitulo = dados.fila === 0
                 ? "Fila vazia! Atendimento imediato."
-                : `Pessoas na fila: ${qtd}`;
+                : `Pessoas na fila: ${dados.fila}`;
 
-            const textoSub = qtd === 0
-                ? "Retire sua senha agora."
-                : `Tempo estimado de espera: ${tempoEstimado} minutos.`;
+            // 2. Formata o tempo (Ex: 1h 30min)
+            const tempoFormatado = formatarTempo(dados.tempoMinutos);
+
+            // 3. Monta a mensagem completa
+            let textoSub = "";
+            if (dados.fila === 0) {
+                textoSub = `Retire sua senha agora. Vagas hoje: ${dados.vagasRestantes}`;
+            } else {
+                textoSub = `Tempo estimado: ${tempoFormatado}. Vagas restantes hoje: ${dados.vagasRestantes}`;
+            }
 
             document.getElementById('info-fila').innerText = textoTitulo;
             document.querySelector('#painel-fila small').innerText = textoSub;
 
-            // Muda a cor do alerta se estiver cheio
+            // Muda cor se estiver acabando as vagas
             const painel = document.getElementById('painel-fila');
-            if(qtd > 10) {
-                painel.className = "alert alert-warning mt-3 shadow-sm";
+            if(dados.vagasRestantes < 5) {
+                painel.className = "alert alert-danger mt-3 shadow-sm";
             } else {
                 painel.className = "alert alert-info mt-3 shadow-sm";
             }
@@ -39,6 +46,18 @@ async function atualizarInfoFila() {
     } catch (e) {
         console.error("Erro ao buscar fila", e);
     }
+}
+
+// Função para converter minutos em Horas e Minutos
+function formatarTempo(minutos) {
+    if (minutos < 60) {
+        return `${minutos} min`;
+    }
+    const horas = Math.floor(minutos / 60);
+    const minRestantes = minutos % 60;
+    // Se minuto for 0, não mostra (ex: "2h" em vez de "2h 00min")
+    if (minRestantes === 0) return `${horas}h`;
+    return `${horas}h ${minRestantes}min`;
 }
 
 async function gerarSenha(tipo) {
