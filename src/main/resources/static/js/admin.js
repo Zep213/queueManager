@@ -100,3 +100,7 @@ function atualizarMesas(lista) {
         container.innerHTML += card;
     });
 }
+function fazerLogout() {
+    // Redireciona para a rota padrão de logout do Spring Security
+    window.location.href = "/logout";
+}
