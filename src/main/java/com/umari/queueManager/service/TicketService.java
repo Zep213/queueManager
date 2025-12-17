@@ -160,6 +160,7 @@ public class TicketService {
         proximo.setStatus(EnumTickets.EM_ATENDIMENTO);
         proximo.setAtendente(nomeAtendente); // <--- GRAVA QUEM CHAMOU
 
+        webSocketService.notificarFila(proximo);
         return ticketRepository.save(proximo);
     }
 
@@ -194,27 +195,14 @@ public class TicketService {
     public Map<String, Object> getDadosDashboard() {
         Map<String, Object> dashboard = new HashMap<>();
 
-        // 1. Fila Geral (Aguardando)
+        // 1. Fila Geral (Quem está esperando)
         List<Ticket> filaGeral = ticketRepository.findByStatus(EnumTickets.AGUARDANDO);
         dashboard.put("filaGeral", filaGeral);
 
-        // 2. O que está acontecendo no Guiche 01?
-        // Busca se tem alguém sendo atendido agora por ele
-        // Nota: Precisaríamos fazer um find customizado no repository, ou filtrar na lista de EM_ATENDIMENTO
-        List<Ticket> emAtendimento = ticketRepository.findByStatus(EnumTickets.EM_ATENDIMENTO);
-
-        Ticket guiche01Atual = emAtendimento.stream()
-                .filter(t -> "guiche01".equals(t.getAtendente()))
-                .findFirst().orElse(null);
-
-        Ticket guiche02Atual = emAtendimento.stream()
-                .filter(t -> "guiche02".equals(t.getAtendente()))
-                .findFirst().orElse(null);
-
-        dashboard.put("guiche01Atual", guiche01Atual);
-        dashboard.put("guiche02Atual", guiche02Atual);
-
-        // Podes adicionar histórico recente de cada um aqui também se quiseres
+        // 2. Mesas Ativas (Retorna TODOS os tickets que estão EM_ATENDIMENTO)
+        // Isso conserta o erro: agora aparece o Admin, Guiche01, Guiche03, etc.
+        List<Ticket> mesasAtivas = ticketRepository.findByStatus(EnumTickets.EM_ATENDIMENTO);
+        dashboard.put("mesasAtivas", mesasAtivas);
 
         return dashboard;
     }
