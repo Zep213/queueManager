@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8080/api/tickets';
+const API_URL = '/api/tickets';
 
 // Ao carregar a página, atualiza a informação da fila
 document.addEventListener('DOMContentLoaded', () => {

@@ -1,0 +1,32 @@
+services:
+  # Serviço do Banco de Dados
+  mongodb:
+    image: mongo:latest
+    container_name: queue-mongo
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - queue-network
+
+  # Seu Sistema Spring Boot
+  app:
+    build: .
+    container_name: queue-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongodb
+    environment:
+      # Sobrescreve a config do application.properties para usar o container do mongo
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/sistema-fila
+    networks:
+      - queue-network
+
+volumes:
+  mongo-data:
+
+networks:
+  queue-network:
+    driver: bridge

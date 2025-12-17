@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8080/api/tickets';
+const API_URL = '/api/tickets';
 let stompClient = null;
 let ticketEmAtendimento = null;
 
