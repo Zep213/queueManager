@@ -1,0 +1,69 @@
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', sans-serif;
+    overflow-x: hidden;
+}
+
+/* Sidebar Fixa e Escura */
+.sidebar {
+    min-height: 100vh;
+    background-color: #2c3e50;
+    color: white;
+}
+
+.sidebar .nav-link {
+    color: #bdc3c7;
+    padding: 15px 10px;
+    border-radius: 8px;
+    margin-bottom: 5px;
+}
+
+.sidebar .nav-link:hover, .sidebar .nav-link.active {
+    background-color: #34495e;
+    color: #fff;
+}
+
+/* Área da Fila (Scrollável) */
+.queue-list {
+    max-height: 70vh; /* Altura máxima para não estourar a tela */
+    overflow-y: auto;
+}
+
+.queue-list::-webkit-scrollbar {
+    width: 6px;
+}
+.queue-list::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 4px;
+}
+
+/* Cards das Mesas */
+.status-card {
+    transition: transform 0.2s;
+    border-left: 5px solid transparent;
+}
+
+.status-card:hover {
+    transform: translateY(-3px);
+}
+
+/* Estilo para Mesa Ocupada */
+.status-card.occupied {
+    border-left-color: #0d6efd; /* Azul */
+    background-color: #fff;
+}
+
+/* Estilo para Mesa Livre */
+.status-card.free {
+    border-left-color: #6c757d; /* Cinza */
+    border-style: dashed;
+}
+
+/* Animação simples para status "Em Andamento" */
+@keyframes blinker {
+    50% { opacity: 0.6; }
+}
+
+.blink {
+    animation: blinker 2s linear infinite;
+}
