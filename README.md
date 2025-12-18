@@ -87,7 +87,3 @@ O sistema opera de forma autônoma com rotinas agendadas (`Cron Jobs`):
 
 **© 2024 QueueManager Solutions.**
 Todo o código fonte contido neste repositório é proprietário e confidencial. A cópia, distribuição ou engenharia reversa não autorizada é estritamente proibida.
-
-```
-
-```
