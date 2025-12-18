@@ -1,7 +1,3 @@
-Com certeza. Já que o software está **completo** e em versão final, ajustei o texto para refletir estabilidade, removi menções a desenvolvimento e mantive o tom profissional e proprietário que solicitou.
-
-Aqui está o arquivo completo para copiar:
-
 ```markdown
 # QueueManager
 
