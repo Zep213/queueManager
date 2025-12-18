@@ -116,7 +116,7 @@
 <div class="modal fade" id="modalHistorico" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header bg-light">
+            <div class="modal-header bg-light d-flex justify-content-between align-items-center">
                 <h5 class="modal-title">Histórico de Atendimentos</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -127,16 +127,19 @@
                         <th>Senha</th>
                         <th>Nome</th>
                         <th>Tipo</th>
-                        <th>Criado em</th>
-                        <th>Finalizado em</th>
+                        <th>Mesa</th>
+                        <th>Hora</th>
                     </tr>
                     </thead>
                     <tbody id="tabela-historico">
                     </tbody>
                 </table>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            <div class="modal-footer bg-light d-flex justify-content-between">
+                <div>
+                    <button onclick="baixarHistoricoCsv()" class="btn btn-success btn-sm me-2">📥 Baixar CSV</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+                </div>
             </div>
         </div>
     </div>

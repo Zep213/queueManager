@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", function() {
     console.log("Painel Admin Iniciado");
     carregarDados();
-    // Atualiza a cada 2 segundos
     setInterval(carregarDados, 2000);
 });
 
@@ -32,7 +31,6 @@ function atualizarFila(lista) {
     }
 
     lista.forEach(t => {
-        // Define cor se for Prioritário
         const bg = t.tipoTicket === 'PRIORITARIO' ? 'bg-warning-subtle' : '';
         const badge = t.tipoTicket === 'PRIORITARIO' ? 'bg-warning text-dark' : 'bg-primary';
 
@@ -64,12 +62,11 @@ function atualizarMesas(lista) {
     }
 
     lista.forEach(t => {
-        // Formata o nome da mesa (ex: guiche01 -> Mesa 01)
         let nomeMesa = "Mesa Desconhecida";
         if (t.atendente) {
             if (t.atendente.toLowerCase() === 'admin') nomeMesa = "Mesa Gerente";
             else if (t.atendente.toLowerCase().includes('guiche')) {
-                nomeMesa = "Mesa " + t.atendente.replace(/\D/g, ''); // Pega só os números
+                nomeMesa = "Mesa " + t.atendente.replace(/\D/g, '');
             } else {
                 nomeMesa = t.atendente.toUpperCase();
             }
@@ -100,7 +97,61 @@ function atualizarMesas(lista) {
         container.innerHTML += card;
     });
 }
+
+// --- RELATÓRIO DO ADMIN ---
+async function carregarRelatorio() {
+    const painel = document.getElementById('painel-relatorio');
+    const corpoTabela = document.getElementById('corpo-tabela-relatorio');
+
+    painel.style.display = 'block';
+    corpoTabela.innerHTML = '<tr><td colspan="5" class="text-center">Carregando dados...</td></tr>';
+
+    try {
+        const response = await fetch('/api/tickets/relatorio/mesas');
+
+        if (!response.ok) {
+            alert("Erro ao buscar relatório. Verifique se você está logado como Admin.");
+            return;
+        }
+
+        const tickets = await response.json();
+        corpoTabela.innerHTML = '';
+
+        if (tickets.length === 0) {
+            corpoTabela.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Nenhum atendimento finalizado hoje.</td></tr>';
+            return;
+        }
+
+        tickets.forEach(ticket => {
+            const dataHora = ticket.createdAt ? new Date(ticket.createdAt).toLocaleString('pt-BR') : '-';
+
+            let nomeMesa = ticket.atendente || 'Desconhecido';
+            if (nomeMesa.includes('guiche')) {
+                nomeMesa = "Mesa " + nomeMesa.replace(/\D/g, '');
+            }
+
+            const row = `
+                <tr>
+                    <td class="fw-bold">${ticket.numero}</td>
+                    <td>${ticket.nomeCliente || 'Não informado'}</td>
+                    <td><span class="badge bg-secondary">${nomeMesa}</span></td>
+                    <td>${ticket.tipoTicket}</td>
+                    <td>${dataHora}</td>
+                </tr>
+            `;
+            corpoTabela.innerHTML += row;
+        });
+
+    } catch (error) {
+        console.error("Erro no relatório:", error);
+        corpoTabela.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Erro ao carregar dados.</td></tr>';
+    }
+}
+
+function baixarCsv() {
+    window.location.href = '/api/tickets/historico/exportar';
+}
+
 function fazerLogout() {
-    // Redireciona para a rota padrão de logout do Spring Security
     window.location.href = "/logout";
 }

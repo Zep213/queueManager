@@ -7,36 +7,33 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(atualizarInfoFila, 30000);
 });
 
-// No src/main/resources/static/js/totem.js
 
 async function atualizarInfoFila() {
     try {
-        const response = await fetch(`${API_URL}/info-totem`); // Novo endpoint
+        const response = await fetch(`${API_URL}/info-totem`);
 
         if (response.ok) {
             const dados = await response.json();
 
-            // 1. Atualiza Texto da Fila
+            // 1. Título
             const textoTitulo = dados.fila === 0
-                ? "Fila vazia! Atendimento imediato."
+                ? "Atendimento Imediato"
                 : `Pessoas na fila: ${dados.fila}`;
 
-            // 2. Formata o tempo (Ex: 1h 30min)
-            const tempoFormatado = formatarTempo(dados.tempoMinutos);
-
-            // 3. Monta a mensagem completa
+            // 2. Subtítulo com a NOVA Previsão
             let textoSub = "";
             if (dados.fila === 0) {
-                textoSub = `Retire sua senha agora. Vagas hoje: ${dados.vagasRestantes}`;
+                textoSub = `Pode vir! Vagas hoje: ${dados.vagasRestantes}`;
             } else {
-                textoSub = `Tempo estimado: ${tempoFormatado}. Vagas restantes hoje: ${dados.vagasRestantes}`;
+                // Aqui usamos o texto que vem do Java (Ex: Hoje às 14:30)
+                textoSub = `Previsão de atendimento: ${dados.previsao}`;
             }
 
             document.getElementById('info-fila').innerText = textoTitulo;
             document.querySelector('#painel-fila small').innerText = textoSub;
 
-            // Muda cor se estiver acabando as vagas
-            const painel = document.getElementById('painel-fila');
+            // ... (o resto do código de cores mantém igual) ...
+             const painel = document.getElementById('painel-fila');
             if(dados.vagasRestantes < 5) {
                 painel.className = "alert alert-danger mt-3 shadow-sm";
             } else {
@@ -47,7 +44,6 @@ async function atualizarInfoFila() {
         console.error("Erro ao buscar fila", e);
     }
 }
-
 // Função para converter minutos em Horas e Minutos
 function formatarTempo(minutos) {
     if (minutos < 60) {

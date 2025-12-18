@@ -24,12 +24,10 @@ async function carregarFila() {
 
 async function chamarProximo() {
     try {
-        // Se já tiver um na tela, finaliza antes de chamar o próximo (opcional, mas recomendado)
         if (ticketEmAtendimento) {
-            await finalizarSemPausa(); // Finaliza o atual silenciosamente
+            await finalizarSemPausa();
         }
 
-        // Chama o próximo da fila
         const response = await fetch(`${API_URL}/proximo`, { method: 'POST' });
 
         if (response.ok) {
@@ -39,7 +37,6 @@ async function chamarProximo() {
                 carregarFila();
             }
         } else {
-            // Se der erro 500 ou texto vazio, assume fila vazia
             alert("A fila está vazia ou não há senhas pendentes!");
         }
     } catch (error) {
@@ -54,13 +51,11 @@ async function finalizarAtual() {
         await finalizarSemPausa();
         limparPainelAtual();
         carregarFila();
-        // Feedback visual simples ou alerta, se preferir
     } catch (error) {
         alert("Erro ao finalizar atendimento.");
     }
 }
 
-// Função auxiliar para mudar status no backend
 async function finalizarSemPausa() {
     if (ticketEmAtendimento) {
         const url = `${API_URL}/${ticketEmAtendimento.id}/status?novoStatus=ATENDIDO`;
@@ -80,7 +75,7 @@ async function cancelarTicket(id) {
         });
 
         if (response.ok) {
-            carregarFila(); // Atualiza a lista
+            carregarFila();
         } else {
             alert("Erro ao cancelar ticket.");
         }
@@ -104,7 +99,6 @@ async function criarTicketAvulso() {
         const response = await fetch(url, { method: 'POST' });
 
         if (response.ok) {
-            // Fecha modal e limpa
             const modalEl = document.getElementById('modalAvulso');
             const modal = bootstrap.Modal.getInstance(modalEl);
             modal.hide();
@@ -172,9 +166,7 @@ function limparPainelAtual() {
 
 async function abrirHistorico() {
     try {
-        const response = await fetch(`${API_URL}/historico`); // Precisas ter este GET no Controller ou usar o endpoint existente
-        // Se não tiveres o endpoint GET /historico, usa a lógica de baixar CSV ou cria o endpoint.
-        // Assumindo que criaste um GET que retorna JSON:
+        const response = await fetch(`${API_URL}/historico`);
         if (response.ok) {
             const lista = await response.json();
             preencherTabelaHistorico(lista);
@@ -182,8 +174,7 @@ async function abrirHistorico() {
         }
     } catch (e) {
         console.error(e);
-        // Fallback se não tiver endpoint JSON
-        alert("Funcionalidade de visualizar histórico na tela requer endpoint JSON.");
+        alert("Erro ao carregar histórico.");
     }
 }
 
@@ -191,20 +182,33 @@ function preencherTabelaHistorico(lista) {
     const tbody = document.getElementById('tabela-historico');
     tbody.innerHTML = '';
 
-    // Ordena mais recente primeiro
     lista.sort((a,b) => new Date(b.dataArquivamento) - new Date(a.dataArquivamento));
 
+    if (lista.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Histórico vazio.</td></tr>';
+        return;
+    }
+
     lista.forEach(t => {
+        // Formata o nome da mesa para exibição
+        let mesa = t.atendente || 'N/A';
+        if (mesa.includes('guiche')) mesa = 'Mesa ' + mesa.replace(/\D/g, '');
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${t.numero}</td>
             <td>${t.nomeCliente || '-'}</td>
             <td>${t.tipo}</td>
-            <td>${new Date(t.dataCriacao).toLocaleTimeString()}</td>
+            <td>${mesa}</td>
             <td>${new Date(t.dataArquivamento).toLocaleTimeString()}</td>
         `;
         tbody.appendChild(tr);
     });
+}
+
+// FUNÇÕES NOVAS PARA O BOTÃO DO HISTÓRICO
+function baixarHistoricoCsv() {
+    window.location.href = `${API_URL}/historico/exportar`;
 }
 
 function conectarWebSocket() {
