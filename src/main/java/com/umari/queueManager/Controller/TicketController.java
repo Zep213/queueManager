@@ -97,7 +97,6 @@ public class TicketController {
                 .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
                 .body(csv.toString());
     }
-
     @GetMapping("/relatorio/mesas")
     public ResponseEntity<List<Ticket>> getRelatorioMesas() {
         return ResponseEntity.ok(ticketService.gerarRelatorioAtendimentos());
