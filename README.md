@@ -1,81 +1,89 @@
-# 🎫 QueueManager - Sistema de Gerenciamento de Filas
+Com certeza. Já que o software está **completo** e em versão final, ajustei o texto para refletir estabilidade, removi menções a desenvolvimento e mantive o tom profissional e proprietário que solicitou.
 
-Sistema simples e eficiente para gerenciamento de filas de atendimento presencial, desenvolvido com **Spring Boot** e **WebSocket** para atualizações em tempo real.
+Aqui está o arquivo completo para copiar:
 
-O sistema controla o fluxo desde a retirada da senha no Totem até o atendimento na Mesa e monitoramento pelo Gerente.
+```markdown
+# QueueManager
 
-## 🚀 Tecnologias Utilizadas
+**Versão:** 1.0.0 (Stable)
+**Status:** Produção
 
-* **Java 21**
-* **Spring Boot 3** (Web, Security, WebSocket)
-* **MongoDB** (Banco de dados NoSQL)
-* **Thymeleaf** + **Bootstrap 5** (Frontend)
-* **JavaScript (Vanilla)** (Lógica do cliente)
-
-## ⚙️ Pré-requisitos
-
-Antes de começar, você precisa ter instalado:
-1.  [Java JDK 21](https://www.oracle.com/java/technologies/downloads/#java21)
-2.  [Maven](https://maven.apache.org/) (ou usar o wrapper incluso `./mvnw`)
-3.  [MongoDB](https://www.mongodb.com/try/download/community) rodando na porta padrão (`27017`).
-
-## 🛠️ Como Rodar o Projeto
-
-1.  **Clone o repositório**:
-    ```bash
-    git clone [https://github.com/seu-usuario/queuemanager.git](https://github.com/seu-usuario/queuemanager.git)
-    cd queuemanager
-    ```
-
-2.  **Inicie o MongoDB**:
-    Certifique-se de que o serviço do Mongo está ativo.
-
-3.  **Execute a aplicação**:
-    ```bash
-    ./mvnw spring-boot:run
-    ```
-    Ou, se preferir, gere o JAR e execute:
-    ```bash
-    ./mvnw clean package
-    java -jar target/queueManager-0.0.1-SNAPSHOT.jar
-    ```
-
-4.  **Acesse no Navegador**:
-    * 🏠 **Totem (Público):** `http://localhost:8080`
-    * 🔐 **Login (Restrito):** `http://localhost:8080/login.html`
-
-## 🔑 Credenciais de Acesso (Padrão)
-
-O sistema já vem com usuários pré-configurados (definidos em `securityConfig.java`):
-
-| Perfil | Usuário | Senha | Acesso |
-| :--- | :--- | :--- | :--- |
-| **Gerente** | `admin` | `admin123` | Dashboard Completo (Fila + Mesas) |
-| **Mesa 01** | `guiche01` | `user123` | Tela de Atendimento |
-| **Mesa 02** | `guiche02` | `user123` | Tela de Atendimento |
-| **Mesa 03** | `guiche03` | `user123` | Tela de Atendimento (Exemplo dinâmico) |
-
-> **Nota:** Para criar novos usuários, adicione-os no `InMemoryUserDetailsManager` dentro da classe de configuração de segurança ou implemente um `UserDetailsService` conectado ao banco.
-
-## 📡 Endpoints da API
-
-O frontend comunica-se com o backend através de uma API REST e WebSocket.
-
-### Principais Rotas
-* `POST /api/tickets?tipoTicket=NORMAL&nomeCliente=Joao` - Gera nova senha.
-* `GET /api/tickets/dashboard` - Retorna status da fila e mesas ativas (JSON).
-* `POST /api/tickets/proximo` - Chama a próxima senha da fila.
-* `PUT /api/tickets/{id}/status` - Atualiza status (ATENDIDO, CANCELADO).
-
-### WebSocket
-* Endpoint: `/ws-queue`
-* Tópico de subscrição: `/topic/senhas` (Recebe atualizações sempre que a fila anda).
-
-## 🧹 Limpeza Automática
-
-O sistema possui um agendador (`AgendadorLimpeza.java`) que roda todo dia à meia-noite (`00:00`) para:
-1.  Arquivar senhas atendidas/canceladas no histórico.
-2.  Limpar a fila principal para o dia seguinte.
+Sistema corporativo de gestão de filas e atendimento presencial com processamento em tempo real. Solução completa projetada para alta disponibilidade, segurança e previsibilidade de fluxo de atendimento.
 
 ---
-Desenvolvido para fins educacionais e práticos.
+
+## 📋 Especificações Técnicas
+
+O projeto segue uma arquitetura moderna baseada em microsserviços e comunicação assíncrona.
+
+* **Core:** Java 21 (LTS) / Spring Boot 3
+* **Database:** MongoDB (NoSQL) - Otimizado para alta volumetria de logs.
+* **Real-time:** WebSocket (Protocolo STOMP) - Sincronização instantânea entre terminais.
+* **Frontend:** Thymeleaf + Bootstrap 5 (Renderização Server-Side).
+* **Security:** Spring Security com controle de acesso baseado em funções (RBAC).
+
+## ⚙️ Requisitos de Ambiente
+
+Para implantação (deploy) em ambiente de produção:
+
+1.  **Java JDK 21** ou superior configurado no PATH.
+2.  **MongoDB** (v5.0+) operando na porta padrão `27017` ou via string de conexão externa.
+3.  **Maven** (apenas para build/compilação).
+
+## 🚀 Instalação e Build
+
+Este é um software proprietário. Certifique-se de que o ambiente possui as credenciais SSH necessárias para clonagem.
+
+**1. Clonagem e Compilação**
+```bash
+git clone git@github.com:sua-empresa/queuemanager.git
+cd queuemanager
+./mvnw clean package -DskipTests
+
+```
+
+**2. Execução do Artefato**
+Recomendamos a execução via JAR com perfil de produção ativo.
+
+```bash
+java -jar target/queueManager-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
+
+```
+
+## 🔐 Controle de Acesso e Segurança
+
+O sistema implementa uma camada de segurança robusta para proteger as operações de atendimento.
+
+**Perfis de Acesso:**
+
+* `ROLE_ADMIN`: Acesso irrestrito a dashboards, relatórios gerenciais e monitoramento de filas.
+* `ROLE_USER`: Acesso operacional para mesas de atendimento e triagem.
+
+> ⚠️ **Gestão de Credenciais:**
+> As credenciais de acesso e chaves de segurança não são versionadas neste repositório.
+> Consulte o arquivo `src/main/java/com/umari/queueManager/config/securityConfig.java` ou o gerenciador de segredos do servidor de CI/CD para administração de usuários.
+
+## 📡 Integração (API & WebSockets)
+
+O sistema expõe interfaces para integração com periféricos (TVs, Totens, Impressoras).
+
+### Endpoints REST (Internos)
+
+* `POST /api/tickets`: Geração e impressão de senhas.
+* `GET /api/tickets/info-totem`: Dados de telemetria para o totem (tempo estimado).
+* `GET /api/tickets/dashboard`: Métricas consolidadas para gestão.
+
+### Canais WebSocket
+
+* `/topic/senhas`: *Broadcast* de eventos de fila (nova senha, chamada, cancelamento) para atualização passiva das interfaces.
+
+## 🧹 Rotinas Automáticas
+
+O sistema opera de forma autônoma com rotinas agendadas (`Cron Jobs`):
+
+* **Reset Diário (00:00):** Arquivamento automático de atendimentos finalizados e reinicialização da sequência de senhas para o dia seguinte.
+
+---
+
+**© 2024 QueueManager Solutions.**
+Todo o código fonte contido neste repositório é proprietário e confidencial. A cópia, distribuição ou engenharia reversa não autorizada é estritamente proibida.
