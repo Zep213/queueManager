@@ -1,12 +1,8 @@
 package com.umari.queueManager.config;
 
-import com.umari.queueManager.service.AutenticacaoService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,9 +18,6 @@ import java.util.Collection;
 @Configuration
 @EnableWebSecurity
 public class securityConfig {
-
-    // NÃO TEMOS MAIS CONSTRUTOR AQUI.
-    // Isso evita o erro de "Dependência Circular".
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -62,15 +55,8 @@ public class securityConfig {
                         .logoutSuccessUrl("/login.html?logout")
                         .permitAll()
                 );
-        return http.build();
-    }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AutenticacaoService autenticacaoService, PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(autenticacaoService);
-        provider.setPasswordEncoder(passwordEncoder);
-        return new ProviderManager(provider);
+        return http.build();
     }
 
     @Bean
