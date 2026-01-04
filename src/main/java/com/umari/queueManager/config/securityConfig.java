@@ -1,8 +1,6 @@
 package com.umari.queueManager.config;
 
-// 1. IMPORTANTE: Importar o seu serviço de autenticação
 import com.umari.queueManager.service.AutenticacaoService;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -14,7 +12,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -26,13 +23,8 @@ import java.util.Collection;
 @EnableWebSecurity
 public class securityConfig {
 
-    // 2. IMPORTANTE: Declarar a variável do serviço aqui no topo
-    private final AutenticacaoService autenticacaoService;
-
-    // 3. IMPORTANTE: Criar o construtor para receber (injetar) o serviço
-    public securityConfig(AutenticacaoService autenticacaoService) {
-        this.autenticacaoService = autenticacaoService;
-    }
+    // NÃO TEMOS MAIS CONSTRUTOR AQUI.
+    // Isso evita o erro de "Dependência Circular".
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -40,18 +32,20 @@ public class securityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // Rotas Públicas
+                        // Arquivos Estáticos
                         .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                        // Páginas Públicas
                         .requestMatchers("/", "/index.html", "/login.html").permitAll()
+                        // Endpoints Públicos
                         .requestMatchers(HttpMethod.POST, "/api/tickets").permitAll()
                         .requestMatchers("/api/tickets/info-totem", "/api/tickets/fila/tamanho").permitAll()
                         .requestMatchers("/ws-queue/**").permitAll()
 
-                        // Rotas Restritas (Gerente)
+                        // Áreas Restritas (Gerente)
                         .requestMatchers("/admin.html", "/api/tickets/dashboard", "/api/tickets/estatisticas").hasRole("ADMIN")
                         .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
 
-                        // Rotas de Atendimento (Qualquer funcionário)
+                        // Áreas de Atendimento
                         .requestMatchers("/atendente.html").hasAnyRole("ADMIN", "USER")
 
                         .anyRequest().authenticated()
@@ -67,22 +61,15 @@ public class securityConfig {
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login.html?logout")
                         .permitAll()
-                )
-                // Removemos a configuração antiga de userDetailsService daqui
-                .authenticationManager(authenticationManager());
-
+                );
         return http.build();
     }
 
-    // 4. Configuração do AuthenticationManager (AQUI OCORRIA O ERRO)
     @Bean
-    public AuthenticationManager authenticationManager() {
+    public AuthenticationManager authenticationManager(AutenticacaoService autenticacaoService, PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-
-        // Agora ele encontra a variável 'autenticacaoService' declarada lá no topo
         provider.setUserDetailsService(autenticacaoService);
-
-        provider.setPasswordEncoder(passwordEncoder());
+        provider.setPasswordEncoder(passwordEncoder);
         return new ProviderManager(provider);
     }
 
@@ -91,7 +78,6 @@ public class securityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // Lógica de Redirecionamento após Login
     @Bean
     public AuthenticationSuccessHandler redirecionamentoInteligente() {
         return (request, response, authentication) -> {
