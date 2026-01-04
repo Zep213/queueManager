@@ -12,6 +12,10 @@
 <nav class="navbar navbar-dark bg-dark mb-4 px-3">
     <div class="container-fluid">
         <span class="navbar-brand mb-0 h1">Painel do Gerente</span>
+        <div class="d-flex gap-2">
+            <button onclick="abrirGestaoUsuarios()" class="btn btn-outline-info btn-sm">
+                👥 Gerenciar Acessos
+            </button>
         <button onclick="fazerLogout()" class="btn btn-outline-light btn-sm">Sair</button>
     </div>
 </nav>
@@ -72,6 +76,57 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modalUsuarios" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Gerenciar Equipe e Acessos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+                <div class="card mb-4 bg-light border-0">
+                    <div class="card-body">
+                        <h6 class="card-title mb-3">Novo Usuário</h6>
+                        <form id="formUsuario" class="row g-2 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label small">Login</label>
+                                <input type="text" class="form-control form-control-sm" id="novoLogin" placeholder="Ex: banca_tcc" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small">Senha</label>
+                                <input type="password" class="form-control form-control-sm" id="novaSenha" placeholder="******" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Perfil</label>
+                                <select class="form-select form-select-sm" id="novoPerfil">
+                                    <option value="USER">Atendente</option>
+                                    <option value="ADMIN">Gerente</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary btn-sm w-100">Salvar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <h6 class="mb-2">Usuários Cadastrados</h6>
+                <table class="table table-sm table-hover">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Login</th>
+                        <th>Perfil</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody id="lista-usuarios">
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

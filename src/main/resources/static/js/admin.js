@@ -155,3 +155,90 @@ function baixarCsv() {
 function fazerLogout() {
     window.location.href = "/logout";
 }
+
+// --- GESTÃO DE USUÁRIOS ---
+
+const API_USUARIOS = '/api/usuarios';
+let modalUsuarios = null;
+
+document.addEventListener("DOMContentLoaded", function() {
+    // ... seu código existente ...
+
+    // Configura o formulário para não recarregar a página
+    document.getElementById('formUsuario').addEventListener('submit', function(e) {
+        e.preventDefault();
+        criarUsuario();
+    });
+});
+
+function abrirGestaoUsuarios() {
+    if (!modalUsuarios) {
+        modalUsuarios = new bootstrap.Modal(document.getElementById('modalUsuarios'));
+    }
+    modalUsuarios.show();
+    listarUsuarios();
+}
+
+async function listarUsuarios() {
+    const tbody = document.getElementById('lista-usuarios');
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center">Carregando...</td></tr>';
+
+    try {
+        const response = await fetch(API_USUARIOS);
+        if (response.ok) {
+            const usuarios = await response.json();
+            tbody.innerHTML = '';
+
+            usuarios.forEach(u => {
+                const badge = u.role === 'ADMIN' ? 'bg-danger' : 'bg-primary';
+                const row = `
+                    <tr>
+                        <td class="fw-bold">${u.username}</td>
+                        <td><span class="badge ${badge}">${u.role}</span></td>
+                        <td class="text-success small">Ativo</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+    } catch (error) {
+        console.error("Erro ao listar usuários:", error);
+        tbody.innerHTML = '<tr><td colspan="3" class="text-danger">Erro ao carregar lista.</td></tr>';
+    }
+}
+
+async function criarUsuario() {
+    const loginInput = document.getElementById('novoLogin');
+    const senhaInput = document.getElementById('novaSenha');
+    const perfilInput = document.getElementById('novoPerfil');
+
+    const payload = {
+        username: loginInput.value.trim(),
+        password: senhaInput.value,
+        role: perfilInput.value
+    };
+
+    try {
+        const response = await fetch(API_USUARIOS, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            alert("Usuário criado com sucesso!");
+            // Limpa o form
+            loginInput.value = "";
+            senhaInput.value = "";
+            // Recarrega a lista
+            listarUsuarios();
+        } else {
+            const erro = await response.text();
+            alert("Erro: " + erro);
+        }
+    } catch (error) {
+        alert("Erro de conexão ao criar usuário.");
+    }
+}
