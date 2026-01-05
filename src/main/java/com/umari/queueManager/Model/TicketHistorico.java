@@ -6,28 +6,30 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
 @Data
-@Document(collection = "tickets_historico") // Grava numa tabela separada
+@Document(collection = "tickets_historico")
 public class TicketHistorico {
     @Id
     private String id;
     private String numero;
     private String nomeCliente;
     private String tipo;
+    private String statusFinal;
+
     private LocalDateTime dataCriacao;
     private LocalDateTime dataArquivamento;
     private String atendente;
 
-
+    // Construtor Vazio (Obrigatório pro Mongo)
     public TicketHistorico() {}
 
-    // Construtor inteligente: Copia os dados do Ticket normal
     public TicketHistorico(Ticket t) {
         this.id = t.getId();
         this.numero = t.getNumero();
         this.nomeCliente = t.getNomeCliente();
-        this.tipo = t.getTipoTicket().toString();
-        this.dataCriacao = t.getCreatedAt();
-        this.dataArquivamento = LocalDateTime.now(); // Hora que foi arquivado (Hora da Pausa)
+        this.tipo = t.getTipoTicket() != null ? t.getTipoTicket().toString() : "NORMAL";
+        this.statusFinal = t.getStatus() != null ? t.getStatus().toString() : "DESCONHECIDO";
+        this.dataCriacao = t.getCreatedAt(); // Data que entrou na fila
+        this.dataArquivamento = LocalDateTime.now(); // Data de agora (Pausa/Arquivamento)
         this.atendente = t.getAtendente();
     }
 }

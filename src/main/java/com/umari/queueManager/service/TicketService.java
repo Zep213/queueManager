@@ -8,7 +8,13 @@ import com.umari.queueManager.repository.TicketRepository;
 import com.umari.queueManager.Enums.EnumTipoTicket;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
+import com.umari.queueManager.Model.DatabaseSequence;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Update;
+import static org.springframework.data.mongodb.core.query.Criteria.where;
+import static org.springframework.data.mongodb.core.query.Query.query;
+import static org.springframework.data.mongodb.core.FindAndModifyOptions.options;
+import java.util.Objects;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -24,13 +30,16 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final TicketHistoricoRepository historicoRepository;
     private final WebSocketService webSocketService;
+    private final MongoOperations mongoOperations;
 
     public TicketService(TicketRepository ticketRepository,
-                         TicketHistoricoRepository historicoRepository,
-                         WebSocketService webSocketService) {
+                         TicketHistoricoRepository ticketHistoricoRepository,
+                         WebSocketService webSocketService,
+                         MongoOperations mongoOperations) { // <--- Novo argumento
         this.ticketRepository = ticketRepository;
-        this.historicoRepository = historicoRepository;
+        this.historicoRepository = ticketHistoricoRepository;
         this.webSocketService = webSocketService;
+        this.mongoOperations = mongoOperations;
     }
 
     public Ticket criarSenha(EnumTipoTicket tipoSolicitado, String nomeCliente) {
@@ -61,6 +70,24 @@ public class TicketService {
 
         webSocketService.notificarFila(ticket);
         return ticketRepository.save(ticket);
+    }
+
+    public long generateSequence(String seqName) {
+        DatabaseSequence counter = mongoOperations.findAndModify(query(where("_id").is(seqName)),
+                new Update().inc("seq", 1), options().returnNew(true).upsert(true),
+                DatabaseSequence.class);
+        return !Objects.isNull(counter) ? counter.getSeq() : 1;
+    }
+
+    private int gerarProximoNumero() {
+        // "ticket_sequence" é o nome da chave que guardará o número no banco
+        return (int) generateSequence("ticket_sequence");
+    }
+
+    public void resetarSequencia() {
+        mongoOperations.findAndModify(query(where("_id").is("ticket_sequence")),
+                new Update().set("seq", 0), options().returnNew(true).upsert(true),
+                DatabaseSequence.class);
     }
 
     private String gerarProximoNumero(Ticket ultimaSenha, String prefixoAtual) {
