@@ -33,11 +33,6 @@ public class TicketController {
         return ticketService.criarSenha(tipoTicket, nomeCliente);
     }
 
-    @GetMapping
-    public List<Ticket> listarFila() {
-        return ticketService.listarSenhasEmEspera();
-    }
-
     @PutMapping("/{id}/status")
     public Ticket atualizaStatus(
             @PathVariable String id,
@@ -61,6 +56,11 @@ public class TicketController {
     @GetMapping("/historico")
     public List<TicketHistorico> listarHistorico() {
         return ticketService.listarHistorico();
+    }
+
+    @GetMapping
+    public List<Ticket> listarTodosAtivos() {
+        return ticketService.listarTodosAtivos();
     }
 
     // --- CSV COM NOME DA MESA FORMATADO ---
@@ -136,5 +136,10 @@ public class TicketController {
         return ResponseEntity.ok(ticketService.getDadosDashboard());
     }
 
+    @PostMapping("{id}/chamar")
+    public Ticket chamarSenhaEspecifica(@PathVariable String id, Authentication authentication) {
+        String nomeAtendente = (authentication != null) ? authentication.getName() : "Desconhecido";
+    return ticketService.chamarTicketEspecifico(id);
+    }
 
 }
