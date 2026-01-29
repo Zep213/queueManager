@@ -14,13 +14,11 @@ import org.springframework.data.mongodb.core.query.Update;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
 import static org.springframework.data.mongodb.core.FindAndModifyOptions.options;
-import java.util.Objects;
+
+import java.util.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -79,6 +77,20 @@ public class TicketService {
         return !Objects.isNull(counter) ? counter.getSeq() : 1;
     }
 
+    public Ticket chamarTicketEspecifico(String id) {
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Ticket não encontrado!"));
+
+        if (ticket.getStatus() != EnumTickets.AGUARDANDO) {
+            throw new RuntimeException("Este ticket não está mais na fila! Status atual: " + ticket.getStatus());
+        }
+
+        ticket.setStatus(EnumTickets.EM_ATENDIMENTO);
+
+        webSocketService.notificarFila(ticket);
+        return ticketRepository.save(ticket);
+    }
+
     private int gerarProximoNumero() {
         // "ticket_sequence" é o nome da chave que guardará o número no banco
         return (int) generateSequence("ticket_sequence");
@@ -102,6 +114,12 @@ public class TicketService {
 
     public List<Ticket> listarSenhasEmEspera() {
         return ticketRepository.findByStatus(EnumTickets.AGUARDANDO);
+    }
+    public List<Ticket> listarTodosAtivos() {
+        List<Ticket> lista = new ArrayList<>();
+        lista.addAll(ticketRepository.findByStatus(EnumTickets.AGUARDANDO));
+        lista.addAll(ticketRepository.findByStatus(EnumTickets.EM_ATENDIMENTO));
+        return lista;
     }
 
     public List<Ticket> gerarRelatorioAtendimentos() {
