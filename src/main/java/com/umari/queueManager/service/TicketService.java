@@ -92,7 +92,6 @@ public class TicketService {
     }
 
     private int gerarProximoNumero() {
-        // "ticket_sequence" é o nome da chave que guardará o número no banco
         return (int) generateSequence("ticket_sequence");
     }
 
@@ -201,51 +200,39 @@ public class TicketService {
         LocalDateTime dataHora = LocalDateTime.now();
 
         while (minutosParaAdicionar > 0) {
-            // 1. Ajustar se cair fora do horário comercial
             if (dataHora.getHour() < 8) {
-                // Antes das 8h -> Move para 8h de hoje
                 dataHora = dataHora.withHour(8).withMinute(0).withSecond(0);
             } else if (dataHora.getHour() >= 12 && dataHora.getHour() < 13) {
-                // Horário de almoço -> Move para 13h
                 dataHora = dataHora.withHour(13).withMinute(0).withSecond(0);
             } else if (dataHora.getHour() >= 16) {
-                // Passou das 16h -> Move para 8h do dia seguinte
                 dataHora = dataHora.plusDays(1).withHour(8).withMinute(0).withSecond(0);
             }
 
-            // 2. Definir o fim do bloco atual de trabalho (Manhã ou Tarde)
             LocalDateTime fimDoBloco;
             if (dataHora.getHour() < 12) {
-                fimDoBloco = dataHora.withHour(12).withMinute(0).withSecond(0); // Fim da manhã
+                fimDoBloco = dataHora.withHour(12).withMinute(0).withSecond(0);
             } else {
-                fimDoBloco = dataHora.withHour(16).withMinute(0).withSecond(0); // Fim da tarde
+                fimDoBloco = dataHora.withHour(16).withMinute(0).withSecond(0);
             }
 
-            // 3. Verificar se o tempo cabe neste bloco
             long minutosNoBloco = java.time.temporal.ChronoUnit.MINUTES.between(dataHora, fimDoBloco);
 
             if (minutosParaAdicionar <= minutosNoBloco) {
-                // Cabe tudo aqui
                 dataHora = dataHora.plusMinutes(minutosParaAdicionar);
                 minutosParaAdicionar = 0;
             } else {
-                // Não cabe, consome o que dá e pula para o próximo bloco
                 minutosParaAdicionar -= minutosNoBloco;
-
-                // Avança o relógio para o início do próximo turno
                 if (dataHora.getHour() < 12) {
-                    dataHora = dataHora.withHour(13).withMinute(0).withSecond(0); // Vai pra tarde
+                    dataHora = dataHora.withHour(13).withMinute(0).withSecond(0);
                 } else {
-                    dataHora = dataHora.plusDays(1).withHour(8).withMinute(0).withSecond(0); // Vai pro dia seguinte
+                    dataHora = dataHora.plusDays(1).withHour(8).withMinute(0).withSecond(0);
                 }
             }
         }
 
-        // Formatar para texto bonito (Ex: "Hoje às 10:30" ou "Amanhã às 08:10")
         java.time.format.DateTimeFormatter horaFmt = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
-        String diaStr = dataHora.toLocalDate().equals(java.time.LocalDate.now()) ? "Hoje" : "Amanhã"; // Simplificado
+        String diaStr = dataHora.toLocalDate().equals(java.time.LocalDate.now()) ? "Hoje" : "Amanhã";
 
-        // Se for mais longe que amanhã, mostra a data (Ex: 25/12)
         if (!dataHora.toLocalDate().equals(java.time.LocalDate.now()) && !dataHora.toLocalDate().equals(java.time.LocalDate.now().plusDays(1))) {
             diaStr = dataHora.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM"));
         }

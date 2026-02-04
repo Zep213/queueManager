@@ -19,7 +19,6 @@ public class TicketHistorico {
     private LocalDateTime dataArquivamento;
     private String atendente;
 
-    // Construtor Vazio (Obrigatório pro Mongo)
     public TicketHistorico() {}
 
     public TicketHistorico(Ticket t) {
@@ -28,8 +27,8 @@ public class TicketHistorico {
         this.nomeCliente = t.getNomeCliente();
         this.tipo = t.getTipoTicket() != null ? t.getTipoTicket().toString() : "NORMAL";
         this.statusFinal = t.getStatus() != null ? t.getStatus().toString() : "DESCONHECIDO";
-        this.dataCriacao = t.getCreatedAt(); // Data que entrou na fila
-        this.dataArquivamento = LocalDateTime.now(); // Data de agora (Pausa/Arquivamento)
+        this.dataCriacao = t.getCreatedAt();
+        this.dataArquivamento = LocalDateTime.now();
         this.atendente = t.getAtendente();
     }
 }

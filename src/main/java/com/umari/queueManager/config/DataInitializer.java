@@ -13,7 +13,6 @@ public class DataInitializer {
     @Bean
     CommandLineRunner initDatabase(UsuarioRepository repository, PasswordEncoder passwordEncoder) {
         return args -> {
-            // Se não houver nenhum usuário, cria o Admin padrão
             if (repository.count() == 0) {
                 Usuario admin = new Usuario();
                 admin.setUsername("#Admin20261#%");

@@ -63,14 +63,12 @@ public class TicketController {
         return ticketService.listarTodosAtivos();
     }
 
-    // --- CSV COM NOME DA MESA FORMATADO ---
     @GetMapping("/historico/exportar")
     public ResponseEntity<String> exportarHistoricoCsv() {
         List<TicketHistorico> historico = ticketService.listarHistorico();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
         StringBuilder csv = new StringBuilder();
-        // Cabeçalho
         csv.append("ID;Numero;Cliente;Tipo;Mesa/Atendente;Data Chegada;Data Atendimento\n");
 
         for (TicketHistorico t : historico) {
@@ -125,7 +123,7 @@ public class TicketController {
 
         Map<String, Object> resposta = new HashMap<>();
         resposta.put("fila", pessoasNaFila);
-        resposta.put("previsao", previsaoTexto); // <--- Campo Novo
+        resposta.put("previsao", previsaoTexto);
         resposta.put("vagasRestantes", Math.max(0, vagasRestantes));
 
         return ResponseEntity.ok(resposta);

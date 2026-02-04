@@ -16,8 +16,6 @@ public class WebSocketService {
     }
 
     public void notificarFila(Ticket ticket) {
-        // Envia o ticket atualizado para o canal "/topic/senhas"
-        // Quem estiver na página do Atendente (ou TV) vai receber este JSON instantaneamente
         messagingTemplate.convertAndSend("/topic/senhas", ticket);
         log.info("📢 WebSocket: Atualização enviada para a fila: " + ticket.getNumero());
     }

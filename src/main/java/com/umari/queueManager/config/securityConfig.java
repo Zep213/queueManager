@@ -25,20 +25,13 @@ public class securityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // Arquivos Estáticos
                         .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-                        // Páginas Públicas
                         .requestMatchers("/", "/index.html", "/login.html").permitAll()
-                        // Endpoints Públicos
                         .requestMatchers(HttpMethod.POST, "/api/tickets").permitAll()
                         .requestMatchers("/api/tickets/info-totem", "/api/tickets/fila/tamanho").permitAll()
                         .requestMatchers("/ws-queue/**").permitAll()
-
-                        // Áreas Restritas (Gerente)
                         .requestMatchers("/admin.html", "/api/tickets/dashboard", "/api/tickets/estatisticas").hasRole("ADMIN")
                         .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
-
-                        // Áreas de Atendimento
                         .requestMatchers("/atendente.html").hasAnyRole("ADMIN", "USER")
 
                         .anyRequest().authenticated()

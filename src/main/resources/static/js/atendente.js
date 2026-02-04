@@ -1,15 +1,14 @@
 const API_URL = '/api/tickets';
 let stompClient = null;
-let ticketEmAtendimento = null; // Variável Global Importante
+let ticketEmAtendimento = null;
 
-// Inicia ao carregar a página
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Iniciando Atendente...");
     carregarFila();
     conectarWebSocket();
 });
 
-// --- FUNÇÕES PRINCIPAIS ---
+
 
 async function carregarFila() {
     try {
@@ -17,7 +16,6 @@ async function carregarFila() {
         if (response.ok) {
             const lista = await response.json();
 
-            // 1. Procura se ALGUÉM (qualquer um) está com status EM_ATENDIMENTO
             const atendendoAgora = lista.find(t => t.status === 'EM_ATENDIMENTO');
 
             if (atendendoAgora) {
@@ -27,7 +25,6 @@ async function carregarFila() {
                 limparPainelAtual();
             }
 
-            // 2. Atualiza a lista de espera (Quem está AGUARDANDO)
             atualizarTabela(lista);
         } else {
             console.error("Erro ao buscar fila. Status:", response.status);
@@ -42,13 +39,12 @@ async function chamarProximo() {
         if(!confirm(`Já existe um atendimento (${ticketEmAtendimento.numero}) em andamento. Finalizar e chamar o próximo?`)) return;
 
         const sucesso = await finalizarSemPausa();
-        if (!sucesso) return; // Se der erro ao finalizar, para tudo
+        if (!sucesso) return;
     }
 
     try {
         const response = await fetch(`${API_URL}/proximo`, { method: 'POST' });
         if (response.ok) {
-            // O WebSocket vai atualizar a tela, mas forçamos aqui para ser rápido
             setTimeout(carregarFila, 200);
         } else {
             const erro = await response.json().catch(() => ({}));
@@ -76,35 +72,30 @@ async function chamarEspecifico(id) {
             setTimeout(carregarFila, 200);
         } else {
             alert("Erro ao chamar o cliente. Talvez ele já tenha sido atendido.");
-            carregarFila(); // Atualiza para ver se sumiu
+            carregarFila();
         }
     } catch (error) {
         console.error("Erro:", error);
     }
 }
 
-// --- AQUI ESTÁ A CORREÇÃO DO FINALIZAR ---
 async function finalizarAtual() {
-    // 1. Verificação de Segurança
     if (!ticketEmAtendimento) {
         alert("O sistema não identificou nenhum atendimento em andamento para finalizar.");
-        carregarFila(); // Tenta corrigir o estado
+        carregarFila();
         return;
     }
 
     if (!confirm(`Finalizar o atendimento da senha ${ticketEmAtendimento.numero}?`)) return;
 
-    // 2. Tenta Finalizar
     const sucesso = await finalizarSemPausa();
 
-    // 3. Se deu certo, limpa a tela
     if (sucesso) {
         limparPainelAtual();
         carregarFila();
     }
 }
 
-// Função auxiliar robusta
 async function finalizarSemPausa() {
     if (!ticketEmAtendimento || !ticketEmAtendimento.id) {
         console.error("Erro: ID do ticket inválido:", ticketEmAtendimento);
@@ -118,10 +109,9 @@ async function finalizarSemPausa() {
         const response = await fetch(url, { method: 'PUT' });
 
         if (response.ok) {
-            ticketEmAtendimento = null; // Limpa a variável global
+            ticketEmAtendimento = null;
             return true;
         } else {
-            // Se o servidor recusar, mostra o erro
             const textoErro = await response.text();
             console.error("Erro servidor:", textoErro);
             alert("Erro ao finalizar: " + response.status);
@@ -163,7 +153,6 @@ async function criarTicketAvulso() {
     }
 }
 
-// --- ATUALIZAÇÃO VISUAL ---
 
 function atualizarTabela(lista) {
     const tbody = document.getElementById('lista-espera');
@@ -196,7 +185,6 @@ function atualizarTabela(lista) {
 }
 
 function atualizarPainelAtual(ticket) {
-    // AQUI É O PULO DO GATO: Atualizamos a variável global
     ticketEmAtendimento = ticket;
 
     document.getElementById('atual-numero').innerText = ticket.numero;
@@ -216,7 +204,6 @@ function limparPainelAtual() {
     badge.className = "badge bg-secondary fs-5";
 }
 
-// --- WEBSOCKET ---
 function conectarWebSocket() {
     const socket = new SockJS('/ws-queue');
     stompClient = Stomp.over(socket);
@@ -228,7 +215,6 @@ function conectarWebSocket() {
     });
 }
 
-// Histórico e Pausa...
 async function abrirHistorico() {
     const response = await fetch(`${API_URL}/historico`);
     if(response.ok) {

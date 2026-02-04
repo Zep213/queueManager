@@ -18,12 +18,11 @@ public class Usuario implements UserDetails {
     @Id
     private String id;
 
-    @Indexed(unique = true) // Garante que não existam 2 usuários com mesmo login
+    @Indexed(unique = true)
     private String username;
     private String password;
-    private String  role; // Ex: "ADMIN", "USER"
+    private String  role;
 
-    // Métodos obrigatórios do Spring Security
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role));

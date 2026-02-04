@@ -17,7 +17,6 @@ async function carregarDados() {
     }
 }
 
-// --- COLUNA DA ESQUERDA: FILA DE ESPERA ---
 function atualizarFila(lista) {
     const container = document.getElementById("lista-espera-container");
     const contador = document.getElementById("contador-fila");
@@ -47,7 +46,7 @@ function atualizarFila(lista) {
     });
 }
 
-// --- COLUNA DA DIREITA: MESAS ATENDENDO ---
+
 function atualizarMesas(lista) {
     const container = document.getElementById("mesas-container");
     container.innerHTML = "";
@@ -156,15 +155,10 @@ function fazerLogout() {
     window.location.href = "/logout";
 }
 
-// --- GESTÃO DE USUÁRIOS ---
-
 const API_USUARIOS = '/api/usuarios';
 let modalUsuarios = null;
 
 document.addEventListener("DOMContentLoaded", function() {
-    // ... seu código existente ...
-
-    // Configura o formulário para não recarregar a página
     document.getElementById('formUsuario').addEventListener('submit', function(e) {
         e.preventDefault();
         criarUsuario();
@@ -229,10 +223,8 @@ async function criarUsuario() {
 
         if (response.ok) {
             alert("Usuário criado com sucesso!");
-            // Limpa o form
             loginInput.value = "";
             senhaInput.value = "";
-            // Recarrega a lista
             listarUsuarios();
         } else {
             const erro = await response.text();

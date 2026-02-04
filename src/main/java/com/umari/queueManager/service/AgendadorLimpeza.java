@@ -31,43 +31,35 @@ public class AgendadorLimpeza {
         this.ticketService = ticketService;
     }
 
-    @Scheduled(cron = "0 0 0 * * *") // Meia-noite
+    @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void limparFilaDiaria() {
         log.info("⏰ Iniciando rotina de limpeza noturna...");
 
         try {
-            // 1. Buscar tickets finalizados
             List<Ticket> finalizados = ticketRepository.findByStatusIn(
                     List.of(EnumTickets.ATENDIDO, EnumTickets.CANCELADO)
             );
 
             if (!finalizados.isEmpty()) {
-                // 2. Mapeamento CORRETO dos atributos
                 List<TicketHistorico> historico = finalizados.stream().map(t -> {
                     TicketHistorico h = new TicketHistorico();
                     h.setNumero(t.getNumero());
                     h.setNomeCliente(t.getNomeCliente()); // Importante salvar o nome
-                    // Converte Enum para String
                     h.setTipo(t.getTipoTicket() != null ? t.getTipoTicket().toString() : "NORMAL");
-                    // Salva o status final (ATENDIDO ou CANCELADO)
                     h.setStatusFinal(t.getStatus().toString());
-                    // Mapeia data de criação (Ticket usa createdAt, Historico usa dataCriacao)
                     h.setDataCriacao(t.getCreatedAt());
-                    // Define a data de agora como o momento do arquivamento
                     h.setDataArquivamento(LocalDateTime.now());
                     h.setAtendente(t.getAtendente());
                     return h;
                 }).toList();
 
-                // 3. Salvar e Deletar
                 ticketHistoricoRepository.saveAll(historico);
                 ticketRepository.deleteAll(finalizados);
 
                 log.info("✅ {} tickets movidos para o histórico.", finalizados.size());
             }
 
-            // 4. Reset do Contador (Só se a fila estiver vazia)
             if (ticketRepository.count() == 0) {
                 ticketService.resetarSequencia();
                 log.info("🔄 Contador reiniciado para 001.");

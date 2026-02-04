@@ -19,20 +19,17 @@ public class UsuarioController {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // Listar todos os usuários (Só Admin pode)
     @GetMapping
     public List<Usuario> listar() {
         return usuarioRepository.findAll();
     }
 
-    // Criar novo usuário (Só Admin pode)
     @PostMapping
     public ResponseEntity<?> criar(@RequestBody Usuario usuario) {
         if (usuarioRepository.findByUsername(usuario.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body("Erro: Usuário já existe!");
         }
 
-        // Criptografa a senha antes de salvar
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
 
         Usuario salvo = usuarioRepository.save(usuario);
