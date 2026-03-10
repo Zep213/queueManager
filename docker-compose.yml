@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  queue-mongo:
+    image: mongo:latest
+    container_name: queue-mongo
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: always
+
+  app:
+    build: .
+    container_name: queue-app
+    ports:
+      - "8080:8080"
+    environment:
+      # A nova variável de ambiente para o Spring Boot 4!
+      - SPRING_MONGODB_URI=mongodb://queue-mongo:27017/sistema-fila
+    depends_on:
+      - queue-mongo
+    restart: always
+
+volumes:
+  mongo_data:
