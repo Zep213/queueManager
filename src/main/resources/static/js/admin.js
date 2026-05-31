@@ -1,8 +1,25 @@
+let stompClientAdmin = null;
+
 document.addEventListener("DOMContentLoaded", function() {
     console.log("Painel Admin Iniciado");
     carregarDados();
-    setInterval(carregarDados, 2000);
+    conectarWebSocketAdmin();
 });
+
+function conectarWebSocketAdmin() {
+    const socket = new SockJS('/ws-queue');
+    stompClientAdmin = Stomp.over(socket);
+    stompClientAdmin.debug = null;
+    stompClientAdmin.connect({}, function() {
+        const subscription = stompClientAdmin.subscribe('/topic/senhas', function() {
+            carregarDados();
+        });
+        window.addEventListener('beforeunload', function() {
+            subscription.unsubscribe();
+            stompClientAdmin.disconnect();
+        });
+    });
+}
 
 async function carregarDados() {
     try {

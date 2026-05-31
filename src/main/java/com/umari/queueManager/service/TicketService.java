@@ -6,7 +6,12 @@ import com.umari.queueManager.Model.TicketHistorico;
 import com.umari.queueManager.repository.TicketHistoricoRepository;
 import com.umari.queueManager.repository.TicketRepository;
 import com.umari.queueManager.Enums.EnumTipoTicket;
+import com.umari.queueManager.Exceptions.FilaVaziaException;
+import com.umari.queueManager.Exceptions.TicketNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import com.umari.queueManager.Model.DatabaseSequence;
 import org.springframework.data.mongodb.core.MongoOperations;
@@ -25,6 +30,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TicketService {
 
+    @Value("${app.atendimento.minutos-por-pessoa:10}")
+    private int minutosPorPessoa;
+
     private final TicketRepository ticketRepository;
     private final TicketHistoricoRepository historicoRepository;
     private final WebSocketService webSocketService;
@@ -33,7 +41,7 @@ public class TicketService {
     public TicketService(TicketRepository ticketRepository,
                          TicketHistoricoRepository ticketHistoricoRepository,
                          WebSocketService webSocketService,
-                         MongoOperations mongoOperations) { // <--- Novo argumento
+                         MongoOperations mongoOperations) {
         this.ticketRepository = ticketRepository;
         this.historicoRepository = ticketHistoricoRepository;
         this.webSocketService = webSocketService;
@@ -77,15 +85,16 @@ public class TicketService {
         return !Objects.isNull(counter) ? counter.getSeq() : 1;
     }
 
-    public Ticket chamarTicketEspecifico(String id) {
+    public Ticket chamarTicketEspecifico(String id, String nomeAtendente) {
         Ticket ticket = ticketRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Ticket não encontrado!"));
+                .orElseThrow(() -> new TicketNotFoundException(id));
 
         if (ticket.getStatus() != EnumTickets.AGUARDANDO) {
             throw new RuntimeException("Este ticket não está mais na fila! Status atual: " + ticket.getStatus());
         }
 
         ticket.setStatus(EnumTickets.EM_ATENDIMENTO);
+        ticket.setAtendente(nomeAtendente);
 
         webSocketService.notificarFila(ticket);
         return ticketRepository.save(ticket);
@@ -127,13 +136,26 @@ public class TicketService {
 
     public Ticket atualizaStatusTicket(String ticketId, EnumTickets novoStatus, String nomeAtendente) {
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new RuntimeException("Ticket não encontrado!"));
+                .orElseThrow(() -> new TicketNotFoundException(ticketId));
+
+        validarTransicao(ticket.getStatus(), novoStatus);
 
         ticket.setStatus(novoStatus);
         if (nomeAtendente != null && !nomeAtendente.isEmpty()) {
             ticket.setAtendente(nomeAtendente);
         }
         return ticketRepository.save(ticket);
+    }
+
+    private void validarTransicao(EnumTickets atual, EnumTickets novo) {
+        boolean valida = switch (atual) {
+            case AGUARDANDO -> novo == EnumTickets.EM_ATENDIMENTO || novo == EnumTickets.CANCELADO;
+            case EM_ATENDIMENTO -> novo == EnumTickets.ATENDIDO || novo == EnumTickets.CANCELADO;
+            case ATENDIDO, CANCELADO -> false;
+        };
+        if (!valida) {
+            throw new IllegalArgumentException("Transição inválida: " + atual + " → " + novo);
+        }
     }
 
     public Ticket chamarProximo(String nomeAtendente) {
@@ -151,7 +173,7 @@ public class TicketService {
         }
 
         if (proximo == null) {
-            throw new RuntimeException("Não há ninguém na fila!");
+            throw new FilaVaziaException();
         }
 
         proximo.setStatus(EnumTickets.EM_ATENDIMENTO);
@@ -171,7 +193,12 @@ public class TicketService {
                     .collect(Collectors.toList());
 
             historicoRepository.saveAll(historicos);
-            ticketRepository.deleteAll(lixo);
+            try {
+                ticketRepository.deleteAll(lixo);
+            } catch (Exception e) {
+                log.error("Falha ao remover tickets após arquivamento — dados podem estar duplicados.", e);
+                throw e;
+            }
             log.info("🧹 Pausa Realizada: {} senhas arquivadas.", lixo.size());
         } else {
             log.info("☕ Pausa solicitada, mas sem senhas para arquivar.");
@@ -179,7 +206,9 @@ public class TicketService {
     }
 
     public List<TicketHistorico> listarHistorico() {
-        return historicoRepository.findAll();
+        return historicoRepository.findAll(
+                PageRequest.of(0, 500, Sort.by("dataArquivamento").descending())
+        ).getContent();
     }
 
     public long contarSenhasHoje() {
@@ -196,7 +225,7 @@ public class TicketService {
     }
 
     public String calcularPrevisaoAtendimento(int pessoasNaFila) {
-        int minutosParaAdicionar = pessoasNaFila * 10; // 10 min por pessoa
+        int minutosParaAdicionar = pessoasNaFila * minutosPorPessoa;
         LocalDateTime dataHora = LocalDateTime.now();
 
         while (minutosParaAdicionar > 0) {

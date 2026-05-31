@@ -1,6 +1,7 @@
 package com.umari.queueManager.Controller;
 import com.umari.queueManager.Model.Usuario;
 import com.umari.queueManager.repository.UsuarioRepository;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +26,7 @@ public class UsuarioController {
     }
 
     @PostMapping
-    public ResponseEntity<?> criar(@RequestBody Usuario usuario) {
+    public ResponseEntity<?> criar(@Valid @RequestBody Usuario usuario) {
         if (usuarioRepository.findByUsername(usuario.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body("Erro: Usuário já existe!");
         }

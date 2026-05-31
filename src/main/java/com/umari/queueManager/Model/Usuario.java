@@ -1,5 +1,7 @@
 package com.umari.queueManager.Model;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -18,10 +20,16 @@ public class Usuario implements UserDetails {
     @Id
     private String id;
 
+    @NotBlank(message = "Username é obrigatório")
     @Indexed(unique = true)
     private String username;
+
+    @NotBlank(message = "Password é obrigatório")
+    @Size(min = 8, message = "Password deve ter ao menos 8 caracteres")
     private String password;
-    private String  role;
+
+    @NotBlank(message = "Role é obrigatória")
+    private String role;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -5,9 +5,11 @@ import com.umari.queueManager.Model.Ticket;
 import com.umari.queueManager.Enums.EnumTipoTicket;
 import com.umari.queueManager.Model.TicketHistorico;
 import com.umari.queueManager.service.TicketService;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 
@@ -15,10 +17,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
+@Validated
 @RestController
 @RequestMapping("/api/tickets")
-@CrossOrigin(origins = "${app.cors.allowed-origins:*}")
 public class TicketController {
 
     private final TicketService ticketService;
@@ -29,7 +32,7 @@ public class TicketController {
 
     @PostMapping
     public Ticket gerarSenha(@RequestParam(defaultValue = "NORMAL") EnumTipoTicket tipoTicket,
-                             @RequestParam String nomeCliente) {
+                             @RequestParam @NotBlank(message = "Nome do cliente é obrigatório") String nomeCliente) {
         return ticketService.criarSenha(tipoTicket, nomeCliente);
     }
 
@@ -81,13 +84,13 @@ public class TicketController {
                 }
             }
 
-            csv.append(t.getId()).append(";")
-                    .append(t.getNumero()).append(";")
-                    .append(t.getNomeCliente() != null ? t.getNomeCliente() : "Sem Nome").append(";")
-                    .append(t.getTipo()).append(";")
-                    .append(nomeMesa).append(";") // Adiciona a mesa formatada
-                    .append(t.getDataCriacao().format(formatter)).append(";")
-                    .append(t.getDataArquivamento().format(formatter)).append("\n");
+            csv.append(escapeCsv(t.getId())).append(";")
+                    .append(escapeCsv(t.getNumero())).append(";")
+                    .append(escapeCsv(t.getNomeCliente() != null ? t.getNomeCliente() : "Sem Nome")).append(";")
+                    .append(escapeCsv(t.getTipo())).append(";")
+                    .append(escapeCsv(nomeMesa)).append(";")
+                    .append(t.getDataCriacao() != null ? t.getDataCriacao().format(formatter) : "").append(";")
+                    .append(t.getDataArquivamento() != null ? t.getDataArquivamento().format(formatter) : "").append("\n");
         }
 
         return ResponseEntity.ok()
@@ -101,7 +104,8 @@ public class TicketController {
     }
 
     @PutMapping("/{id}/cancelar")
-    public ResponseEntity<Void> cancelarAtendimento(@PathVariable String  id, String nomeAtendente) {
+    public ResponseEntity<Void> cancelarAtendimento(@PathVariable String id, Authentication authentication) {
+        String nomeAtendente = (authentication != null) ? authentication.getName() : "Desconhecido";
         ticketService.atualizaStatusTicket(id, EnumTickets.CANCELADO, nomeAtendente);
         return ResponseEntity.noContent().build();
     }
@@ -137,7 +141,12 @@ public class TicketController {
     @PostMapping("{id}/chamar")
     public Ticket chamarSenhaEspecifica(@PathVariable String id, Authentication authentication) {
         String nomeAtendente = (authentication != null) ? authentication.getName() : "Desconhecido";
-    return ticketService.chamarTicketEspecifico(id);
+        return ticketService.chamarTicketEspecifico(id, nomeAtendente);
+    }
+
+    private String escapeCsv(String value) {
+        String safe = Objects.toString(value, "");
+        return "\"" + safe.replace("\"", "\"\"") + "\"";
     }
 
 }

@@ -209,8 +209,12 @@ function conectarWebSocket() {
     stompClient = Stomp.over(socket);
     stompClient.debug = null;
     stompClient.connect({}, function () {
-        stompClient.subscribe('/topic/fila', function () {
+        const subscription = stompClient.subscribe('/topic/senhas', function () {
             carregarFila();
+        });
+        window.addEventListener('beforeunload', function() {
+            subscription.unsubscribe();
+            stompClient.disconnect();
         });
     });
 }

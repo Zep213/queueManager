@@ -15,7 +15,7 @@ Esta é a tela que fica virada para o público na entrada.
 
 ## 2. Mesa de Atendimento (Funcionários)
 **Acesso:** `http://localhost:8080/atendente.html`
-*(Necessário Login: use `guiche01` / `user123`)*
+*(Necessário Login — solicite as credenciais ao administrador do sistema)*
 
 Onde o atendente trabalha.
 * **📢 Chamar Próximo:** O sistema busca automaticamente a próxima pessoa.
@@ -29,7 +29,7 @@ Onde o atendente trabalha.
 
 ## 3. Painel do Gerente (Administrador)
 **Acesso:** `http://localhost:8080/admin.html`
-*(Necessário Login: use `admin` / `admin123`)*
+*(Necessário Login — solicite as credenciais ao administrador do sistema)*
 
 Tela de monitoramento em tempo real.
 * **Lado Esquerdo (Fila):** Lista completa de quem está aguardando. Senhas prioritárias aparecem destacadas em amarelo.
