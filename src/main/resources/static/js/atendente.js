@@ -2,6 +2,16 @@ const API_URL = '/api/tickets';
 let stompClient = null;
 let ticketEmAtendimento = null;
 
+function escapeHtml(valor) {
+    if (valor === null || valor === undefined) return '';
+    return String(valor)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Iniciando Atendente...");
     carregarFila();
@@ -172,7 +182,7 @@ function atualizarTabela(lista) {
 
         tr.innerHTML = `
             <td class="ps-3 fw-bold">${t.numero}</td>
-            <td>${t.nomeCliente || '-'}</td>
+            <td>${escapeHtml(t.nomeCliente) || '-'}</td>
             <td><span class="badge ${badgeClass}">${t.tipoTicket}</span></td>
             <td>${hora}</td>
             <td class="text-end pe-3">
@@ -239,7 +249,7 @@ function preencherTabelaHistorico(lista) {
         tbody.innerHTML += `
             <tr>
                 <td>${t.numero}</td>
-                <td>${t.nomeCliente || '-'}</td>
+                <td>${escapeHtml(t.nomeCliente) || '-'}</td>
                 <td>${t.tipo}</td>
                 <td>${mesa}</td>
                 <td>${new Date(t.dataArquivamento).toLocaleTimeString()}</td>

@@ -1,5 +1,15 @@
 let stompClientAdmin = null;
 
+function escapeHtml(valor) {
+    if (valor === null || valor === undefined) return '';
+    return String(valor)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     console.log("Painel Admin Iniciado");
     carregarDados();
@@ -54,7 +64,7 @@ function atualizarFila(lista) {
             <li class="list-group-item d-flex justify-content-between align-items-center ${bg}">
                 <div>
                     <span class="fw-bold fs-5">${t.numero}</span>
-                    <div class="small text-muted">${t.nomeCliente || 'Cliente'}</div>
+                    <div class="small text-muted">${escapeHtml(t.nomeCliente) || 'Cliente'}</div>
                 </div>
                 <span class="badge ${badge}">${t.tipoTicket}</span>
             </li>
@@ -99,7 +109,7 @@ function atualizarMesas(lista) {
                     <div class="p-3 bg-light rounded border">
                         <small class="text-uppercase text-muted">Atendendo</small>
                         <h1 class="fw-bold text-dark my-1">${t.numero}</h1>
-                        <div class="text-truncate fw-bold text-primary">${t.nomeCliente || ''}</div>
+                        <div class="text-truncate fw-bold text-primary">${escapeHtml(t.nomeCliente)}</div>
                         <span class="badge ${corBadge} mt-2">${t.tipoTicket}</span>
                     </div>
 
@@ -149,7 +159,7 @@ async function carregarRelatorio() {
             const row = `
                 <tr>
                     <td class="fw-bold">${ticket.numero}</td>
-                    <td>${ticket.nomeCliente || 'Não informado'}</td>
+                    <td>${escapeHtml(ticket.nomeCliente) || 'Não informado'}</td>
                     <td><span class="badge bg-secondary">${nomeMesa}</span></td>
                     <td>${ticket.tipoTicket}</td>
                     <td>${dataHora}</td>

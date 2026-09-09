@@ -64,13 +64,21 @@ public class TicketService {
 
         Ticket ticket = new Ticket();
         ticket.setNumero(novoNumero);
-        ticket.setNomeCliente(nomeCliente);
+        ticket.setNomeCliente(sanitizarNomeCliente(nomeCliente));
         ticket.setStatus(EnumTickets.AGUARDANDO);
         ticket.setTipoTicket(tipoSolicitado);
         ticket.setCreatedAt(LocalDateTime.now());
 
         webSocketService.notificarFila(ticket);
         return ticketRepository.save(ticket);
+    }
+
+    private String sanitizarNomeCliente(String nomeCliente) {
+        if (nomeCliente == null) {
+            return null;
+        }
+        // input público não autenticado, renderizado via innerHTML no admin/atendente — nunca deixa formar tag/script
+        return nomeCliente.replaceAll("[<>]", "").trim();
     }
 
     public long generateSequence(String seqName) {
