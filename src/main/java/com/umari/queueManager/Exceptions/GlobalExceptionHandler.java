@@ -6,17 +6,23 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import com.umari.queueManager.Exceptions.ErroResposta;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErroResposta> tratarConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
@@ -55,9 +61,25 @@ public class GlobalExceptionHandler {
         return criarResposta(HttpStatus.BAD_REQUEST, "Parâmetro em Falta", mensagem, request);
     }
 
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErroResposta> tratarErroAutenticacao(AuthenticationException ex, HttpServletRequest request) {
+        return criarResposta(HttpStatus.UNAUTHORIZED, "Não Autorizado", "Credenciais inválidas.", request);
+    }
+
+    @ExceptionHandler(TicketEstadoInvalidoException.class)
+    public ResponseEntity<ErroResposta> tratarTicketEstadoInvalido(TicketEstadoInvalidoException ex, HttpServletRequest request) {
+        return criarResposta(HttpStatus.CONFLICT, "Estado Inválido", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErroResposta> tratarTipoInvalido(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+        String mensagem = "Valor inválido para o parâmetro '" + ex.getName() + "': " + ex.getValue();
+        return criarResposta(HttpStatus.BAD_REQUEST, "Parâmetro Inválido", mensagem, request);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErroResposta> tratarErroGenerico(Exception ex, HttpServletRequest request) {
-        ex.printStackTrace();
+        log.error("Erro inesperado ao processar {}", request.getRequestURI(), ex);
 
         return criarResposta(HttpStatus.INTERNAL_SERVER_ERROR, "Erro Interno", "Ocorreu um erro inesperado no servidor. Tente novamente mais tarde.", request);
     }

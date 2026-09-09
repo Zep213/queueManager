@@ -4,6 +4,7 @@ import com.umari.queueManager.Enums.EnumTickets;
 import com.umari.queueManager.Enums.EnumTipoTicket;
 import com.umari.queueManager.Exceptions.FilaVaziaException;
 import com.umari.queueManager.Exceptions.TicketNotFoundException;
+import com.umari.queueManager.Model.DatabaseSequence;
 import com.umari.queueManager.Model.Ticket;
 import com.umari.queueManager.repository.TicketHistoricoRepository;
 import com.umari.queueManager.repository.TicketRepository;
@@ -15,6 +16,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -118,5 +121,20 @@ class QueueManegerApplicationTests {
         assertThatThrownBy(() -> ticketService.atualizaStatusTicket(
                 "fantasma", EnumTickets.ATENDIDO, "guiche01"))
                 .isInstanceOf(TicketNotFoundException.class);
+    }
+
+    @Test
+    void criarSenha_deveRemoverTagsHtmlDoNomeCliente() {
+        DatabaseSequence seq = new DatabaseSequence();
+        seq.setSeq(1);
+        when(mongoOperations.findAndModify(any(Query.class), any(), any(FindAndModifyOptions.class), eq(DatabaseSequence.class)))
+                .thenReturn(seq);
+        when(ticketRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Ticket resultado = ticketService.criarSenha(
+                EnumTipoTicket.NORMAL, "<img src=x onerror=alert(1)>João");
+
+        assertThat(resultado.getNomeCliente()).isEqualTo("img src=x onerror=alert(1)João");
+        assertThat(resultado.getNomeCliente()).doesNotContain("<", ">");
     }
 }

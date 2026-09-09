@@ -7,6 +7,7 @@ import com.umari.queueManager.repository.TicketHistoricoRepository;
 import com.umari.queueManager.repository.TicketRepository;
 import com.umari.queueManager.Enums.EnumTipoTicket;
 import com.umari.queueManager.Exceptions.FilaVaziaException;
+import com.umari.queueManager.Exceptions.TicketEstadoInvalidoException;
 import com.umari.queueManager.Exceptions.TicketNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,9 +50,6 @@ public class TicketService {
     }
 
     public Ticket criarSenha(EnumTipoTicket tipoSolicitado, String nomeCliente) {
-        LocalDateTime inicioDia = LocalDate.now().atStartOfDay();
-        LocalDateTime fimDia = LocalDate.now().atTime(LocalTime.MAX);
-
         String prefixo;
         if (tipoSolicitado == EnumTipoTicket.PRIORITARIO) {
             prefixo = "P";
@@ -61,21 +59,26 @@ public class TicketService {
             prefixo = "N";
         }
 
-        Ticket ultimaSenhaDesteTipo = ticketRepository.findFirstByTipoTicketAndCreatedAtBetweenOrderByCreatedAtDesc(
-                tipoSolicitado, inicioDia, fimDia
-        );
-
-        String novoNumero = gerarProximoNumero(ultimaSenhaDesteTipo, prefixo);
+        long sequencial = generateSequence("ticket_seq_" + prefixo + "_" + LocalDate.now());
+        String novoNumero = String.format("%s%03d", prefixo, sequencial);
 
         Ticket ticket = new Ticket();
         ticket.setNumero(novoNumero);
-        ticket.setNomeCliente(nomeCliente);
+        ticket.setNomeCliente(sanitizarNomeCliente(nomeCliente));
         ticket.setStatus(EnumTickets.AGUARDANDO);
         ticket.setTipoTicket(tipoSolicitado);
         ticket.setCreatedAt(LocalDateTime.now());
 
         webSocketService.notificarFila(ticket);
         return ticketRepository.save(ticket);
+    }
+
+    private String sanitizarNomeCliente(String nomeCliente) {
+        if (nomeCliente == null) {
+            return null;
+        }
+        // input público não autenticado, renderizado via innerHTML no admin/atendente — nunca deixa formar tag/script
+        return nomeCliente.replaceAll("[<>]", "").trim();
     }
 
     public long generateSequence(String seqName) {
@@ -90,7 +93,7 @@ public class TicketService {
                 .orElseThrow(() -> new TicketNotFoundException(id));
 
         if (ticket.getStatus() != EnumTickets.AGUARDANDO) {
-            throw new RuntimeException("Este ticket não está mais na fila! Status atual: " + ticket.getStatus());
+            throw new TicketEstadoInvalidoException("Este ticket não está mais na fila! Status atual: " + ticket.getStatus());
         }
 
         ticket.setStatus(EnumTickets.EM_ATENDIMENTO);
@@ -100,24 +103,10 @@ public class TicketService {
         return ticketRepository.save(ticket);
     }
 
-    private int gerarProximoNumero() {
-        return (int) generateSequence("ticket_sequence");
-    }
-
     public void resetarSequencia() {
         mongoOperations.findAndModify(query(where("_id").is("ticket_sequence")),
                 new Update().set("seq", 0), options().returnNew(true).upsert(true),
                 DatabaseSequence.class);
-    }
-
-    private String gerarProximoNumero(Ticket ultimaSenha, String prefixoAtual) {
-        if (ultimaSenha == null) {
-            return prefixoAtual + "001";
-        }
-        String numeroString = ultimaSenha.getNumero().substring(1);
-        int sequencial = Integer.parseInt(numeroString);
-        sequencial++;
-        return String.format("%s%03d", prefixoAtual, sequencial);
     }
 
     public List<Ticket> listarSenhasEmEspera() {

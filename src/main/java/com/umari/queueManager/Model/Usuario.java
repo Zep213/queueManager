@@ -25,7 +25,7 @@ public class Usuario implements UserDetails {
     private String username;
 
     @NotBlank(message = "Password é obrigatório")
-    @Size(min = 8, message = "Password deve ter ao menos 8 caracteres")
+    @Size(min = 8, max = 72, message = "Password deve ter entre 8 e 72 caracteres")
     private String password;
 
     @NotBlank(message = "Role é obrigatória")
