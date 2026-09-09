@@ -146,6 +146,9 @@ public class TicketController {
 
     private String escapeCsv(String value) {
         String safe = Objects.toString(value, "");
+        if (!safe.isEmpty() && "=+-@\t\r".indexOf(safe.charAt(0)) >= 0) {
+            safe = "'" + safe;
+        }
         return "\"" + safe.replace("\"", "\"\"") + "\"";
     }
 
